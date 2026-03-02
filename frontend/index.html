@@ -1,14 +1,185 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Urbidata - Urban Mobility</title>
-    <link rel="stylesheet" href="css/style.css">
+    <title>Urbidata — Movilidad Urbana Sevilla · Málaga</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+    <link rel="stylesheet" href="css/styles.css">
 </head>
+
 <body>
-    <h1>Urbidata</h1>
-    <p>Urban Mobility Project: Malaga & Seville</p>
-    <script src="js/app.js"></script>
+    <div class="bg-grid"></div>
+    <div class="bg-glow glow-1"></div>
+    <div class="bg-glow glow-2"></div>
+    <div class="bg-glow glow-3"></div>
+    <header>
+        <div class="header-inner">
+            <a class="logo" href="#">
+                <div class="logo-icon">U</div>
+                <div>
+                    <div class="logo-text">Urbi<span>data</span></div>
+                    <div class="logo-sub">Movilidad Urbana</div>
+                </div>
+            </a>
+            <nav>
+                <button class="nav-btn active" onclick="showSection('dashboard')">Dashboard</button>
+                <button class="nav-btn" onclick="showSection('flujos')">Flujos</button>
+                <button class="nav-btn" onclick="showSection('dormitorio')">Dormitorio</button>
+                <button class="nav-btn" onclick="showSection('comparativa')">Comparativa</button>
+            </nav>
+            <div class="header-badge">
+                <div class="pulse"></div>Datos Oct 2023
+            </div>
+        </div>
+    </header>
+    <div class="wrapper">
+        <div class="hero reveal">
+            <div class="hero-left">
+                <div class="hero-tag">Análisis MITMA OpenData</div>
+                <h1>Movilidad urbana<br><span class="line2">Sevilla · Málaga</span></h1>
+                <p class="hero-desc">Análisis de flujos pendulares, patrones de movilidad y municipios dormitorio entre
+                    las dos mayores metrópolis de Andalucía.</p>
+                <div class="route-badge">
+                    <span class="city city-sev">Sevilla</span>
+                    <span class="arrow">⇄</span>
+                    <span class="city city-mal">Málaga</span>
+                    <span style="color:var(--muted);font-size:12px;margin-left:4px">30 municipios analizados</span>
+                </div>
+            </div>
+        </div>
+        <div class="kpi-grid">
+            <div class="kpi-card c1">
+                <div class="kpi-value" id="kpi-total">—</div>
+                <div class="kpi-label">Total desplazamientos</div>
+                <div class="kpi-trend trend-up" id="kpi-period">—</div>
+            </div>
+            <div class="kpi-card c2">
+                <div class="kpi-value" id="kpi-municipios">30</div>
+                <div class="kpi-label">Municipios analizados</div>
+                <div class="kpi-trend" style="color:var(--muted)">Sev. + Mál.</div>
+            </div>
+            <div class="kpi-card c3">
+                <div class="kpi-value" id="kpi-pares">—</div>
+                <div class="kpi-label">Pares O-D activos</div>
+                <div class="kpi-trend trend-up">Alta conectividad</div>
+            </div>
+            <div class="kpi-card c4">
+                <div class="kpi-value" id="kpi-dormitorio">—</div>
+                <div class="kpi-label">Pueblos dormitorio</div>
+                <div class="kpi-trend trend-dn">Dependencia laboral</div>
+            </div>
+        </div>
+        <div class="filter-bar reveal">
+            <span class="filter-label">Filtros</span>
+            <select class="filter-select" id="filter-provincia" onchange="applyFilters()">
+                <option value="">Todas las provincias</option>
+                <option value="Sevilla">Sevilla</option>
+                <option value="Málaga">Málaga</option>
+            </select>
+            <button class="btn-primary" onclick="applyFilters()">Actualizar</button>
+            <button class="btn-ghost" onclick="exportCSV()">Exportar CSV</button>
+        </div>
+        <div id="section-dashboard" class="page-section active">
+            <div class="section reveal">
+                <div class="section-header">
+                    <div class="section-title">Mapa de Flujos Urbanos</div>
+                    <div class="toggle-group">
+                        <button class="toggle-btn active" onclick="toggleMapMode(this,'all')">Todos</button>
+                        <button class="toggle-btn" onclick="toggleMapMode(this,'sevilla')">Sevilla</button>
+                        <button class="toggle-btn" onclick="toggleMapMode(this,'malaga')">Málaga</button>
+                    </div>
+                </div>
+                <div class="panel">
+                    <div id="map"></div>
+                </div>
+            </div>
+            <div class="grid-2 reveal">
+                <div class="panel">
+                    <div class="panel-header">
+                        <div class="panel-title">Ranking de Municipios</div>
+                        <div class="toggle-group" id="rankingToggle"><button class="toggle-btn active"
+                                onclick="updateRanking('salidas',this)">Salidas</button><button class="toggle-btn"
+                                onclick="updateRanking('entradas',this)">Entradas</button></div>
+                    </div>
+                    <div class="panel-body">
+                        <div id="ranking-list"></div>
+                    </div>
+                </div>
+                <div class="panel">
+                    <div class="panel-header">
+                        <div class="panel-title">Top Flujos O-D</div>
+                    </div>
+                    <div class="panel-body">
+                        <div id="top-flujos-list"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div id="section-flujos" class="page-section">
+            <div class="section reveal">
+                <div class="section-title">Distribución de flujos por par O-D</div>
+                <div class="panel">
+                    <div class="panel-body">
+                        <div class="chart-wrap"><canvas id="chart-flujos"></canvas></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div id="section-dormitorio" class="page-section">
+            <div class="section reveal">
+                <div class="section-title">Municipios Dormitorio</div>
+                <div class="grid-2">
+                    <div class="panel">
+                        <div class="panel-body">
+                            <div class="chart-wrap"><canvas id="chart-dormitorio"></canvas></div>
+                        </div>
+                    </div>
+                    <div class="panel">
+                        <div class="panel-body">
+                            <div id="dorm-cards" class="dorm-grid"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div id="section-comparativa" class="page-section">
+            <div class="section reveal">
+                <div class="section-header">
+                    <div class="section-title">Laborable vs. Festivo</div>
+                    <div class="toggle-group" id="compToggle">
+                        <button class="toggle-btn active" onclick="setCompView('ambos',this)">Ambos</button>
+                        <button class="toggle-btn" onclick="setCompView('laborable',this)">Laborable</button>
+                        <button class="toggle-btn" onclick="setCompView('festivo',this)">Festivo</button>
+                    </div>
+                </div>
+                <div class="panel">
+                    <div class="panel-body">
+                        <div class="chart-wrap"><canvas id="chart-comparativa"></canvas></div>
+                    </div>
+                </div>
+                <div class="panel" style="margin-top:20px">
+                    <div class="panel-body">
+                        <div id="comp-table"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <footer>
+            <div class="footer-left">Urbidata © 2026 · Datos: MITMA OpenData</div>
+        </footer>
+    </div>
+    <script src="js/config.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/main.js"></script>
 </body>
+
 </html>
