@@ -97,7 +97,16 @@ const DATA = generateData();
 
 const Api = {
     fetchMainData: async () => {
-        // Mocking API call
+        try {
+            const response = await fetch(`${CONFIG.API_BASE_URL}/data`);
+            if (response.ok) {
+                console.log("Using real data from backend");
+                return await response.json();
+            }
+        } catch (error) {
+            console.warn("Backend not available, using mock data", error);
+        }
+        // Fallback to mock data if backend fails or is not ready
         return DATA;
     },
     getCoords: () => COORDS
