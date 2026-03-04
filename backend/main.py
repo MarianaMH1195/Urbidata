@@ -65,8 +65,9 @@ async def get_legacy_data():
     }
 
 # IMPORTANTE: Montamos el frontend al FINAL para que las rutas de la API tengan prioridad.
-# Al usar html=True, visitar "/" servirá automáticamente "index.html".
-app.mount("/", StaticFiles(directory="frontend", html=True), name="frontend")
+# Usamos la ruta absoluta para evitar errores de CWD.
+FRONTEND_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "frontend")
+app.mount("/", StaticFiles(directory=FRONTEND_DIR, html=True), name="frontend")
 
 if __name__ == "__main__":
     import uvicorn

@@ -1,8 +1,3 @@
-# ============================================================
-# pipeline.py - Pipeline de datos de movilidad MITMA
-# Genera CSVs agregados de Málaga y Sevilla
-# ============================================================
-
 # ── IMPORTACIÓN DE LIBRERÍAS ─────────────────────────────────
 import sys
 print('● Importando librerías ●')

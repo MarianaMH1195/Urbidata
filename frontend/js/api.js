@@ -90,24 +90,55 @@ function generateData() {
             ? +((salidasMap[k].lab - salidasMap[k].fest) / salidasMap[k].fest * 100).toFixed(1) : 0
     })).sort((a, b) => b.laborable - a.laborable);
 
-    return { flujos, dormitorio, comparativa, salidasMap, entradasMap, allMuni, keys };
+    const ranking = keys.map(k => ({
+        origen: k,
+        viajes: salidasMap[k].lab
+    })).sort((a, b) => b.viajes - a.viajes);
+
+    return { flujos, dormitorio, comparativa, ranking, salidasMap, entradasMap, allMuni, keys };
 }
 
 const DATA = generateData();
 
 const Api = {
-    fetchMainData: async () => {
+    fetchRanking: async (provincia = null) => {
         try {
-            const response = await fetch(`${CONFIG.API_BASE_URL}/data`);
-            if (response.ok) {
-                console.log("Using real data from backend");
-                return await response.json();
-            }
-        } catch (error) {
-            console.warn("Backend not available, using mock data", error);
-        }
-        // Fallback to mock data if backend fails or is not ready
-        return DATA;
+            const url = provincia ? `${CONFIG.API_BASE_URL}/ranking?provincia=${provincia}` : `${CONFIG.API_BASE_URL}/ranking`;
+            const response = await fetch(url);
+            if (response.ok) return await response.json();
+        } catch (e) { console.warn("Error fetching ranking, using mock", e); }
+        return DATA.ranking; // Fallback to mock if available or empty
     },
-    getCoords: () => COORDS
+
+    fetchDormitorio: async (provincia = null) => {
+        try {
+            const url = provincia ? `${CONFIG.API_BASE_URL}/pueblos_dormitorio?provincia=${provincia}` : `${CONFIG.API_BASE_URL}/pueblos_dormitorio`;
+            const response = await fetch(url);
+            if (response.ok) return await response.json();
+        } catch (e) { console.warn("Error fetching dormitorio, using mock", e); }
+        return DATA.dormitorio.filter(d => !provincia || d.provincia.toLowerCase() === provincia.toLowerCase());
+    },
+
+    fetchComparativa: async (provincia = null) => {
+        try {
+            const url = provincia ? `${CONFIG.API_BASE_URL}/comparativa?provincia=${provincia}` : `${CONFIG.API_BASE_URL}/comparativa`;
+            const response = await fetch(url);
+            if (response.ok) return await response.json();
+        } catch (e) { console.warn("Error fetching comparativa, using mock", e); }
+        // For comparative, we might need to mock or return empty
+        return [];
+    },
+
+    fetchFlujos: async (provincia = null) => {
+        try {
+            const url = provincia ? `${CONFIG.API_BASE_URL}/flujos?provincia=${provincia}` : `${CONFIG.API_BASE_URL}/flujos`;
+            const response = await fetch(url);
+            if (response.ok) return await response.json();
+        } catch (e) { console.warn("Error fetching flujos, using mock", e); }
+        return DATA.flujos;
+    },
+
+    getCoords: () => COORDS,
+    getMunicipiosSevilla: () => MUNICIPIOS_SEV,
+    getMunicipiosMalaga: () => MUNICIPIOS_MAL
 };

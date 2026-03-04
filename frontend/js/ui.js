@@ -19,7 +19,7 @@ const UI = {
     },
 
     loadKPIs: (data) => {
-        const total = data.flujos.reduce((s, f) => s + f.total, 0);
+        const total = data.flujos.reduce((s, f) => s + (f.viajes || f.total || 0), 0);
         UI.animateNumber('kpi-total', total);
         UI.animateNumber('kpi-municipios', 30);
         UI.animateNumber('kpi-pares', data.flujos.length);
@@ -46,41 +46,46 @@ const UI = {
     drawFlows: (data, coords, mode = 'all', filtProv = '') => {
         flowLayers.forEach(l => map.removeLayer(l));
         flowLayers = [];
-        const prov = filtProv.toLowerCase();
         let top = data.flujos.slice(0, 40);
-        if (mode === 'sevilla') top = top.filter(f => f.provincia_origen === 'Sevilla' || f.provincia_destino === 'Sevilla');
-        if (mode === 'malaga') top = top.filter(f => f.provincia_origen === 'Málaga' || f.provincia_destino === 'Málaga');
-        if (prov) top = top.filter(f => f.provincia_origen.toLowerCase() === prov || f.provincia_destino.toLowerCase() === prov);
-
-        const max = top[0]?.total || 1;
+        const max = (top[0]?.viajes || top[0]?.total || 1);
         top.forEach(f => {
             const c1 = coords[f.origen], c2 = coords[f.destino]; if (!c1 || !c2) return;
-            const norm = f.total / max;
+            const val = f.viajes || f.total || 0;
+            const norm = val / max;
             const line = L.polyline([c1, c2], { weight: 2 + norm * 8, color: norm > 0.5 ? '#FF6B20' : norm > 0.2 ? '#F5C842' : '#7FE0A0', opacity: 0.75 + norm * 0.22, smoothFactor: 2 });
-            line.bindTooltip(`<strong>${f.nombre_origen} → ${f.nombre_destino}</strong><br>Lab: ${f.laborable.toLocaleString('es-ES')} · Fest: ${f.festivo.toLocaleString('es-ES')}`);
+            const name1 = data.allMuni[f.origen] || f.origen;
+            const name2 = data.allMuni[f.destino] || f.destino;
+            line.bindTooltip(`<strong>${name1} → ${name2}</strong><br>Viajes: ${val.toLocaleString('es-ES')}`);
             line.addTo(map); flowLayers.push(line);
         });
     },
 
-    renderRanking: (data, mode) => {
-        const sMap = data.salidasMap, eMap = data.entradasMap;
-        const entries = data.keys.map(k => ({ nombre: data.allMuni[k], provincia: k.startsWith("41") ? "Sevilla" : "Málaga", valor: mode === 'salidas' ? sMap[k].lab : eMap[k].lab })).sort((a, b) => b.valor - a.valor).slice(0, 8);
+    renderRanking: (data) => {
+        const entries = data.ranking.slice(0, 8);
         const container = document.getElementById('ranking-list'); if (!container) return;
-        const max = entries[0].valor; container.innerHTML = '<table class="rank-table"><thead><tr><th>#</th><th>Municipio</th><th>Provincia</th><th></th><th>Viajes</th></tr></thead><tbody></tbody></table>';
+        const max = entries[0]?.viajes || 1; container.innerHTML = '<table class="rank-table"><thead><tr><th>#</th><th>Municipio</th><th>Provincia</th><th></th><th>Viajes</th></tr></thead><tbody></tbody></table>';
         entries.forEach((e, i) => {
-            const pct = (e.valor / max * 100).toFixed(0), color = e.provincia === 'Sevilla' ? 'var(--sevilla)' : 'var(--malaga)';
+            const val = e.viajes;
+            const pct = (val / max * 100).toFixed(0);
+            const provName = String(e.origen).startsWith('41') ? 'Sevilla' : 'Málaga';
+            const color = provName === 'Sevilla' ? 'var(--sevilla)' : 'var(--malaga)';
+            const muniName = data.allMuni[e.origen] || e.origen;
             const tr = document.createElement('tr');
-            tr.innerHTML = `<td class="rank-num">${i + 1}</td><td class="rank-name">${e.nombre}</td><td><span class="tag-${e.provincia === 'Sevilla' ? 'sev' : 'mal'} flow-badge" style="font-size:11px">${e.provincia}</span></td><td class="rank-bar-wrap"><div class="rank-bar" style="width:${pct}%;background:${color}"></div></td><td class="rank-val" style="color:${color}">${e.valor.toLocaleString('es-ES')}</td>`;
+            tr.innerHTML = `<td class="rank-num">${i + 1}</td><td class="rank-name">${muniName}</td><td><span class="tag-${provName === 'Sevilla' ? 'sev' : 'mal'} flow-badge" style="font-size:11px">${provName}</span></td><td class="rank-bar-wrap"><div class="rank-bar" style="width:${pct}%;background:${color}"></div></td><td class="rank-val" style="color:${color}">${val.toLocaleString('es-ES')}</td>`;
             container.querySelector('tbody').appendChild(tr);
         });
     },
 
-    renderTopFlujos: (data, filtProv = '') => {
-        const prov = filtProv.toLowerCase(), container = document.getElementById('top-flujos-list'); if (!container) return;
-        let top = data.flujos.slice(0, 10); if (prov) top = top.filter(f => f.provincia_origen.toLowerCase() === prov || f.provincia_destino.toLowerCase() === prov);
+    renderTopFlujos: (data) => {
+        const container = document.getElementById('top-flujos-list'); if (!container) return;
+        let top = data.flujos.slice(0, 10);
         container.innerHTML = top.map(f => {
-            const isInterp = f.interprovincial;
-            return `<div class="flow-row"><div class="flow-cities"><span style="color:${f.provincia_origen === 'Sevilla' ? 'var(--sevilla)' : 'var(--malaga)'}">${f.nombre_origen}</span><span class="flow-arrow"> → </span><span style="color:${f.provincia_destino === 'Sevilla' ? 'var(--sevilla)' : 'var(--malaga)'}">${f.nombre_destino}</span></div><span class="flow-badge ${isInterp ? 'tag-int' : ''}">${isInterp ? '⇿' : ''} ${f.total.toLocaleString('es-ES')}</span></div>`;
+            const val = f.viajes || f.total || 0;
+            const prov1 = String(f.origen).startsWith('41') ? 'Sevilla' : 'Málaga';
+            const prov2 = String(f.destino).startsWith('41') ? 'Sevilla' : 'Málaga';
+            const name1 = data.allMuni[f.origen] || f.origen;
+            const name2 = data.allMuni[f.destino] || f.destino;
+            return `<div class="flow-row"><div class="flow-cities"><span style="color:${prov1 === 'Sevilla' ? 'var(--sevilla)' : 'var(--malaga)'}">${name1}</span><span class="flow-arrow"> → </span><span style="color:${prov2 === 'Sevilla' ? 'var(--sevilla)' : 'var(--malaga)'}">${name2}</span></div><span class="flow-badge">${val.toLocaleString('es-ES')}</span></div>`;
         }).join('');
     },
 
@@ -93,13 +98,18 @@ const UI = {
     initChartFlujos: (data) => {
         const ctx = document.getElementById('chart-flujos'); if (!ctx) return;
         const top10 = data.flujos.slice(0, 10);
-        chartFlujos = new Chart(ctx, { type: 'bar', data: { labels: top10.map(f => `${f.nombre_origen.split(' ')[0]}→${f.nombre_destino.split(' ')[0]}`), datasets: [{ label: 'Laborable', data: top10.map(f => f.laborable), backgroundColor: 'rgba(200,80,42,0.82)', borderRadius: 6 }, { label: 'Festivo', data: top10.map(f => f.festivo), backgroundColor: 'rgba(122,158,126,0.78)', borderRadius: 6 }] }, options: UI.chartOpts('Flujos O-D', true) });
+        const labels = top10.map(f => {
+            const n1 = MUNICIPIOS_SEV[f.origen] || MUNICIPIOS_MAL[f.origen] || f.origen;
+            const n2 = MUNICIPIOS_SEV[f.destino] || MUNICIPIOS_MAL[f.destino] || f.destino;
+            return `${n1.split(' ')[0]}→${n2.split(' ')[0]}`;
+        });
+        chartFlujos = new Chart(ctx, { type: 'bar', data: { labels, datasets: [{ label: 'Viajes', data: top10.map(f => f.viajes), backgroundColor: 'rgba(200,80,42,0.82)', borderRadius: 6 }] }, options: UI.chartOpts('Flujos O-D', true) });
     },
 
     initChartDormitorio: (data) => {
         const ctx = document.getElementById('chart-dormitorio'); if (!ctx) return;
         const top8 = data.dormitorio.slice(0, 8);
-        chartDorm = new Chart(ctx, { type: 'bar', data: { labels: top8.map(d => d.nombre), datasets: [{ label: 'Ratio S/E', data: top8.map(d => d.ratio), backgroundColor: top8.map(d => d.ratio > 3 ? 'rgba(200,80,42,0.88)' : d.ratio > 2 ? 'rgba(201,151,58,0.88)' : 'rgba(122,158,126,0.82)'), borderRadius: 6 }] }, options: UI.chartOpts('Ratio Salidas/Entradas', false) });
+        chartDorm = new Chart(ctx, { type: 'bar', data: { labels: top8.map(d => MUNICIPIOS_SEV[d.municipio] || MUNICIPIOS_MAL[d.municipio] || d.municipio), datasets: [{ label: '% Dependencia', data: top8.map(d => d.pct_dependencia), backgroundColor: top8.map(d => d.pct_dependencia > 20 ? 'rgba(200,80,42,0.88)' : d.pct_dependencia > 10 ? 'rgba(201,151,58,0.88)' : 'rgba(122,158,126,0.82)'), borderRadius: 6 }] }, options: UI.chartOpts('% Dependencia Capital', false) });
     },
 
     initChartComparativa: (data, compView = 'ambos') => {
@@ -108,7 +118,7 @@ const UI = {
         if (compView !== 'festivo') datasets.push({ label: 'Laborable', data: top12.map(d => d.laborable), backgroundColor: 'rgba(200,80,42,0.85)', borderRadius: 5 });
         if (compView !== 'laborable') datasets.push({ label: 'Festivo', data: top12.map(d => d.festivo), backgroundColor: 'rgba(122,158,126,0.75)', borderRadius: 5 });
         if (chartComp) chartComp.destroy();
-        chartComp = new Chart(ctx, { type: 'bar', data: { labels: top12.map(d => d.nombre), datasets }, options: UI.chartOpts('Desplazamientos', true) });
+        chartComp = new Chart(ctx, { type: 'bar', data: { labels: top12.map(d => data.allMuni[d.origen] || d.origen), datasets }, options: UI.chartOpts('Desplazamientos', true) });
     },
 
     chartOpts: (label, legend) => ({ responsive: true, maintainAspectRatio: false, plugins: { legend: { display: legend, labels: { color: '#C4A98A', font: { family: 'DM Sans' }, boxWidth: 12 } }, tooltip: { backgroundColor: '#FDFAF6', titleColor: '#5C3D28', bodyColor: '#A8917C', borderColor: 'rgba(60,35,10,0.09)', borderWidth: 1 } }, scales: { x: { grid: { color: 'rgba(60,35,10,0.04)' }, ticks: { color: '#C4A98A', font: { family: 'DM Sans', size: 11 }, maxRotation: 35 } }, y: { grid: { color: 'rgba(60,35,10,0.05)' }, ticks: { color: '#C4A98A', font: { family: 'DM Sans', size: 11 }, callback: v => v >= 1000 ? (v / 1000).toFixed(0) + 'k' : v } } } }),
@@ -120,8 +130,12 @@ const UI = {
     renderDormCards: (data) => {
         const container = document.getElementById('dorm-cards'); if (!container) return;
         container.innerHTML = data.dormitorio.slice(0, 12).map(d => {
-            const rClass = d.ratio > 3 ? 'high' : d.ratio > 2 ? 'med' : 'low', color = d.provincia === 'Sevilla' ? 'var(--sevilla)' : 'var(--malaga)';
-            return `<div class="dorm-card"><div class="dorm-city">${d.nombre}</div><div class="dorm-ratio ${rClass}">${d.ratio.toFixed(2)}</div><div class="dorm-label">ratio salidas/entradas</div><div class="dorm-prov" style="background:${color}22;color:${color}">${d.provincia}</div></div>`;
+            const pct = d.pct_dependencia;
+            const rClass = pct > 25 ? 'high' : pct > 15 ? 'med' : 'low';
+            const provName = d.municipio.startsWith('41') ? 'Sevilla' : 'Málaga';
+            const color = provName === 'Sevilla' ? 'var(--sevilla)' : 'var(--malaga)';
+            const muniName = MUNICIPIOS_SEV[d.municipio] || MUNICIPIOS_MAL[d.municipio] || d.municipio;
+            return `<div class="dorm-card"><div class="dorm-city">${muniName}</div><div class="dorm-ratio ${rClass}">${pct.toFixed(1)}%</div><div class="dorm-label">dependencia capital</div><div class="dorm-prov" style="background:${color}22;color:${color}">${provName}</div></div>`;
         }).join('');
     },
 
@@ -132,8 +146,12 @@ const UI = {
     renderCompTable: (data) => {
         const container = document.getElementById('comp-table'); if (!container) return;
         container.innerHTML = `<table class="rank-table"><thead><tr><th>Municipio</th><th>Provincia</th><th>Laborable</th><th>Festivo</th><th>Variación</th></tr></thead><tbody>${data.comparativa.slice(0, 10).map(d => {
-            const v = d.variacion, col = v > 20 ? '#C8502A' : v > 0 ? '#C9973A' : '#5A8A5E';
-            return `<tr><td style="font-weight:500">${d.nombre}</td><td><span class="flow-badge tag-${d.provincia === 'Sevilla' ? 'sev' : 'mal'}" style="font-size:11px">${d.provincia}</span></td><td style="font-family:'Syne',sans-serif;font-weight:700">${d.laborable.toLocaleString('es-ES')}</td><td style="color:var(--muted)">${d.festivo.toLocaleString('es-ES')}</td><td style="color:${col};font-weight:700;font-family:'Syne',sans-serif">${v > 0 ? '+' : ''}${v}%</td></tr>`;
+            const lab = d.laborable || 0, fest = d.festivo || 0;
+            const v = fest > 0 ? Math.round((lab - fest) / fest * 100) : 0;
+            const col = v > 20 ? '#C8502A' : v > 0 ? '#C9973A' : '#5A8A5E';
+            const provName = d.origen.startsWith('41') ? 'Sevilla' : 'Málaga';
+            const muniName = MUNICIPIOS_SEV[d.origen] || MUNICIPIOS_MAL[d.origen] || d.origen;
+            return `<tr><td style="font-weight:500">${muniName}</td><td><span class="flow-badge tag-${provName === 'Sevilla' ? 'sev' : 'mal'}" style="font-size:11px">${provName}</span></td><td style="font-family:'Syne',sans-serif;font-weight:700">${lab.toLocaleString('es-ES')}</td><td style="color:var(--muted)">${fest.toLocaleString('es-ES')}</td><td style="color:${col};font-weight:700;font-family:'Syne',sans-serif">${v > 0 ? '+' : ''}${v}%</td></tr>`;
         }).join('')}</tbody></table>`;
     },
 
