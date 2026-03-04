@@ -1,3 +1,9 @@
+import sys
+import os
+
+# Asegurar que el directorio de este archivo está en el path para las importaciones locales
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+
 from fastapi import FastAPI, Query
 from fastapi.middleware.cors import CORSMiddleware
 import analysis
