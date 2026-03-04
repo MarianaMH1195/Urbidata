@@ -28,17 +28,26 @@ const UI = {
     },
 
     initMap: (data, coords) => {
+        const container = document.getElementById('map');
+        if (!container) return;
+
+        // Evitar error "Map container is already initialized"
+        if (map) {
+            UI.drawFlows(data, coords);
+            return;
+        }
+
         map = L.map('map', { zoomControl: true, attributionControl: false }).setView([37.0, -4.9], 7);
         L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19 }).addTo(map);
         L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19, opacity: 0.9 }).addTo(map);
 
-        Object.keys(data.allMuni).forEach(k => {
+        Object.keys(data.allMuni || {}).forEach(k => {
             const c = coords[k]; if (!c) return;
             const isCap = k === "41091" || k === "29067";
-            const color = k.startsWith("41") ? '#FF6B35' : '#00E5C8';
+            const color = String(k).startsWith("41") ? '#FF6B35' : '#00E5C8';
             const radius = isCap ? 10 : 5;
             L.circleMarker(c, { radius, color, fillColor: color, fillOpacity: 0.8, weight: isCap ? 3 : 1.5 }).addTo(map)
-                .bindTooltip(`<strong>${data.allMuni[k]}</strong><br>${k.startsWith("41") ? "Sevilla" : "Málaga"}`, { className: 'leaflet-tooltip-dark' });
+                .bindTooltip(`<strong>${data.allMuni[k]}</strong><br>${String(k).startsWith("41") ? "Sevilla" : "Málaga"}`, { className: 'leaflet-tooltip-dark' });
         });
         UI.drawFlows(data, coords);
     },
