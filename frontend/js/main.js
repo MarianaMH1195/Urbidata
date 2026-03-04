@@ -1,8 +1,8 @@
 // ==================== MAIN MODULE ====================
 let globalData;
-let mapMode = 'all';
-let rankMode = 'salidas';
-let compView = 'ambos';
+window.mapMode = 'all';
+window.rankMode = 'salidas';
+window.compView = 'ambos';
 
 document.addEventListener('DOMContentLoaded', async () => {
     await updateAllData();
@@ -25,8 +25,8 @@ async function updateAllData(prov = null) {
     const coords = Api.getCoords();
 
     UI.loadKPIs(globalData);
-    UI.initMap(globalData, coords);
-    UI.renderRanking(globalData);
+    UI.initMap(globalData, coords, window.mapMode);
+    UI.renderRanking(globalData, window.rankMode);
     UI.renderTopFlujos(globalData);
     UI.initCharts(globalData);
     UI.renderDormitorio(globalData);
@@ -37,29 +37,40 @@ async function updateAllData(prov = null) {
 window.showSection = (name) => UI.showSection(name);
 
 window.toggleMapMode = (btn, mode) => {
-    mapMode = mode;
-    document.querySelectorAll('[onclick^="toggleMapMode"]').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    UI.drawFlows(globalData, Api.getCoords(), mapMode, document.getElementById('filter-provincia').value);
-};
-
-window.updateRanking = (mode, btn) => {
-    rankMode = mode;
-    document.querySelectorAll('#rankingToggle .toggle-btn').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    UI.renderRanking(globalData, rankMode);
-};
-
-window.setCompView = (mode, btn) => {
-    compView = mode;
-    document.querySelectorAll('#compToggle .toggle-btn').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    UI.initChartComparativa(globalData, compView);
+    try {
+        if (!globalData) return;
+        window.mapMode = mode;
+        document.querySelectorAll('#mapProvToggle .toggle-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        UI.drawFlows(globalData, Api.getCoords(), window.mapMode);
+    } catch (e) { console.error("Toggle Map Region Error:", e); }
 };
 
 window.applyFilters = async () => {
-    const prov = document.getElementById('filter-provincia').value;
-    await updateAllData(prov);
+    try {
+        const prov = document.getElementById('filter-provincia').value;
+        await updateAllData(prov);
+    } catch (e) { console.error("Apply Filters Error:", e); }
+};
+
+window.updateRanking = (mode, btn) => {
+    try {
+        if (!globalData) return;
+        window.rankMode = mode;
+        document.querySelectorAll('#rankingToggle .toggle-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        UI.renderRanking(globalData, window.rankMode);
+    } catch (e) { console.error("Update Ranking Error:", e); }
+};
+
+window.setCompView = (mode, btn) => {
+    try {
+        if (!globalData) return;
+        window.compView = mode;
+        document.querySelectorAll('#compToggle .toggle-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        UI.initChartComparativa(globalData, window.compView);
+    } catch (e) { console.error("Set Comp View Error:", e); }
 };
 
 window.exportCSV = () => {

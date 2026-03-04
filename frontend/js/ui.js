@@ -28,51 +28,76 @@ const UI = {
     },
 
     initMap: (data, coords) => {
-        const container = document.getElementById('map');
-        if (!container) return;
+        try {
+            const container = document.getElementById('map');
+            if (!container) return;
+            if (map) { UI.drawFlows(data, coords, window.mapMode || 'all'); return; }
 
-        // Evitar error "Map container is already initialized"
-        if (map) {
-            UI.drawFlows(data, coords);
-            return;
-        }
+            map = L.map('map', { zoomControl: true, attributionControl: false }).setView([37.15, -4.85], 7.5);
 
-        map = L.map('map', { zoomControl: true, attributionControl: false }).setView([37.0, -4.9], 7);
-        L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19 }).addTo(map);
-        L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19, opacity: 0.9 }).addTo(map);
+            // Capas Base
+            const sat = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19 });
+            const topo = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', { maxZoom: 19 });
+            const terr = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Physical_Map/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19 });
 
-        Object.keys(data.allMuni || {}).forEach(k => {
-            const c = coords[k]; if (!c) return;
-            const isCap = k === "41091" || k === "29067";
-            const color = String(k).startsWith("41") ? '#FF6B35' : '#00E5C8';
-            const radius = isCap ? 10 : 5;
-            L.circleMarker(c, { radius, color, fillColor: color, fillOpacity: 0.8, weight: isCap ? 3 : 1.5 }).addTo(map)
-                .bindTooltip(`<strong>${data.allMuni[k]}</strong><br>${String(k).startsWith("41") ? "Sevilla" : "Málaga"}`, { className: 'leaflet-tooltip-dark' });
-        });
-        UI.drawFlows(data, coords);
+            // Overlays
+            const labels = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19, opacity: 0.8 });
+
+            const baseMaps = { "Satélite": sat, "Topográfico": topo, "Terreno": terr };
+            const overlays = { "Etiquetas": labels };
+
+            sat.addTo(map);
+            labels.addTo(map);
+
+            // Control de capas (estilo nativo Leaflet posicionado arriba a la derecha)
+            L.control.layers(baseMaps, overlays, { collapsed: false, position: 'topright' }).addTo(map);
+
+            const muniMap = data.allMuni || {};
+            Object.keys(muniMap).forEach(k => {
+                const c = coords[k]; if (!c) return;
+                const isCap = String(k) === "41091" || String(k) === "29067";
+                const color = String(k).startsWith("41") ? '#FF6DAA' : '#00E5C8';
+                const radius = isCap ? 8 : 4;
+                L.circleMarker(c, { radius, color, fillColor: color, fillOpacity: 0.7, weight: isCap ? 2 : 1 }).addTo(map)
+                    .bindTooltip(`<strong>${muniMap[k]}</strong>`, { className: 'tooltip-custom' });
+            });
+            UI.drawFlows(data, coords, window.mapMode || 'all');
+        } catch (e) { console.error("Map Init Error:", e); }
     },
 
-    drawFlows: (data, coords, mode = 'all', filtProv = '') => {
+    drawFlows: (data, coords, mode = 'all') => {
+        if (!map) return;
         flowLayers.forEach(l => map.removeLayer(l));
         flowLayers = [];
-        let top = data.flujos.slice(0, 40);
+
+        let filtered = data.flujos || [];
+        if (mode === 'sevilla') {
+            filtered = filtered.filter(f => String(f.origen).startsWith('41') || String(f.destino).startsWith('41'));
+        } else if (mode === 'malaga') {
+            filtered = filtered.filter(f => String(f.origen).startsWith('29') || String(f.destino).startsWith('29'));
+        }
+
+        let top = filtered.slice(0, 40);
         const max = (top[0]?.viajes || top[0]?.total || 1);
+        const muniMap = data.allMuni || {};
+
         top.forEach(f => {
             const c1 = coords[f.origen], c2 = coords[f.destino]; if (!c1 || !c2) return;
             const val = f.viajes || f.total || 0;
             const norm = val / max;
             const line = L.polyline([c1, c2], { weight: 2 + norm * 8, color: norm > 0.5 ? '#FF6B20' : norm > 0.2 ? '#F5C842' : '#7FE0A0', opacity: 0.75 + norm * 0.22, smoothFactor: 2 });
-            const name1 = data.allMuni[f.origen] || f.origen;
-            const name2 = data.allMuni[f.destino] || f.destino;
-            line.bindTooltip(`<strong>${name1} → ${name2}</strong><br>Viajes: ${val.toLocaleString('es-ES')}`);
+            const n1 = muniMap[f.origen] || f.origen, n2 = muniMap[f.destino] || f.destino;
+            line.bindTooltip(`<strong>${n1} → ${n2}</strong><br>Viajes: ${val.toLocaleString('es-ES')}`);
             line.addTo(map); flowLayers.push(line);
         });
     },
 
-    renderRanking: (data) => {
+    renderRanking: (data, mode = 'salidas') => {
         const entries = data.ranking.slice(0, 8);
         const container = document.getElementById('ranking-list'); if (!container) return;
-        const max = entries[0]?.viajes || 1; container.innerHTML = '<table class="rank-table"><thead><tr><th>#</th><th>Municipio</th><th>Provincia</th><th></th><th>Viajes</th></tr></thead><tbody></tbody></table>';
+        const colName = mode === 'salidas' ? 'Viajes (Salida)' : 'Viajes (Entrada)';
+        const max = entries[0]?.viajes || 1;
+        container.innerHTML = `<table class="rank-table"><thead><tr><th>#</th><th>Municipio</th><th>Provincia</th><th></th><th>${colName}</th></tr></thead><tbody></tbody></table>`;
         entries.forEach((e, i) => {
             const val = e.viajes;
             const pct = (val / max * 100).toFixed(0);
@@ -101,24 +126,28 @@ const UI = {
     initCharts: (data) => {
         UI.initChartFlujos(data);
         UI.initChartDormitorio(data);
-        UI.initChartComparativa(data);
+        UI.initChartComparativa(data, window.compView || 'ambos');
     },
 
     initChartFlujos: (data) => {
         const ctx = document.getElementById('chart-flujos'); if (!ctx) return;
-        const top10 = data.flujos.slice(0, 10);
+        const top10 = (data.flujos || []).slice(0, 10);
+        const muniMap = data.allMuni || {};
         const labels = top10.map(f => {
-            const n1 = MUNICIPIOS_SEV[f.origen] || MUNICIPIOS_MAL[f.origen] || f.origen;
-            const n2 = MUNICIPIOS_SEV[f.destino] || MUNICIPIOS_MAL[f.destino] || f.destino;
+            const n1 = String(muniMap[f.origen] || f.origen), n2 = String(muniMap[f.destino] || f.destino);
             return `${n1.split(' ')[0]}→${n2.split(' ')[0]}`;
         });
-        chartFlujos = new Chart(ctx, { type: 'bar', data: { labels, datasets: [{ label: 'Viajes', data: top10.map(f => f.viajes), backgroundColor: 'rgba(200,80,42,0.82)', borderRadius: 6 }] }, options: UI.chartOpts('Flujos O-D', true) });
+        if (chartFlujos) chartFlujos.destroy();
+        chartFlujos = new Chart(ctx, { type: 'bar', data: { labels, datasets: [{ label: 'Viajes', data: top10.map(f => f.viajes || f.total || 0), backgroundColor: 'rgba(200,80,42,0.85)', borderRadius: 6 }] }, options: UI.chartOpts('Flujos Principales', true) });
     },
 
     initChartDormitorio: (data) => {
         const ctx = document.getElementById('chart-dormitorio'); if (!ctx) return;
-        const top8 = data.dormitorio.slice(0, 8);
-        chartDorm = new Chart(ctx, { type: 'bar', data: { labels: top8.map(d => MUNICIPIOS_SEV[d.municipio] || MUNICIPIOS_MAL[d.municipio] || d.municipio), datasets: [{ label: '% Dependencia', data: top8.map(d => d.pct_dependencia), backgroundColor: top8.map(d => d.pct_dependencia > 20 ? 'rgba(200,80,42,0.88)' : d.pct_dependencia > 10 ? 'rgba(201,151,58,0.88)' : 'rgba(122,158,126,0.82)'), borderRadius: 6 }] }, options: UI.chartOpts('% Dependencia Capital', false) });
+        const top8 = (data.dormitorio || []).slice(0, 8);
+        const muniMap = data.allMuni || {};
+        const labels = top8.map(d => String(muniMap[d.municipio] || d.municipio).split(' ')[0]);
+        if (chartDorm) chartDorm.destroy();
+        chartDorm = new Chart(ctx, { type: 'bar', data: { labels, datasets: [{ label: '% Dependencia', data: top8.map(d => d.pct_dependencia || 0), backgroundColor: 'rgba(201,151,58,0.88)', borderRadius: 6 }] }, options: UI.chartOpts('% Dependencia Capital', false) });
     },
 
     initChartComparativa: (data, compView = 'ambos') => {
@@ -138,13 +167,13 @@ const UI = {
 
     renderDormCards: (data) => {
         const container = document.getElementById('dorm-cards'); if (!container) return;
-        container.innerHTML = data.dormitorio.slice(0, 12).map(d => {
-            const pct = d.pct_dependencia;
-            const rClass = pct > 25 ? 'high' : pct > 15 ? 'med' : 'low';
-            const provName = d.municipio.startsWith('41') ? 'Sevilla' : 'Málaga';
-            const color = provName === 'Sevilla' ? 'var(--sevilla)' : 'var(--malaga)';
-            const muniName = MUNICIPIOS_SEV[d.municipio] || MUNICIPIOS_MAL[d.municipio] || d.municipio;
-            return `<div class="dorm-card"><div class="dorm-city">${muniName}</div><div class="dorm-ratio ${rClass}">${pct.toFixed(1)}%</div><div class="dorm-label">dependencia capital</div><div class="dorm-prov" style="background:${color}22;color:${color}">${provName}</div></div>`;
+        const muniMap = data.allMuni || {};
+        container.innerHTML = (data.dormitorio || []).slice(0, 12).map(d => {
+            const p = d.pct_dependencia || 0;
+            const rClass = p > 25 ? 'high' : p > 15 ? 'med' : 'low';
+            const prov = String(d.municipio).startsWith('41') ? 'Sevilla' : 'Málaga';
+            const name = muniMap[d.municipio] || d.municipio;
+            return `<div class="dorm-card"><div class="dorm-city">${name}</div><div class="dorm-ratio ${rClass}">${p.toFixed(1)}%</div><div class="dorm-label">dependencia</div><div class="dorm-prov" style="color:var(--${prov.toLowerCase()})">${prov}</div></div>`;
         }).join('');
     },
 
@@ -154,21 +183,22 @@ const UI = {
 
     renderCompTable: (data) => {
         const container = document.getElementById('comp-table'); if (!container) return;
-        container.innerHTML = `<table class="rank-table"><thead><tr><th>Municipio</th><th>Provincia</th><th>Laborable</th><th>Festivo</th><th>Variación</th></tr></thead><tbody>${data.comparativa.slice(0, 10).map(d => {
-            const lab = d.laborable || 0, fest = d.festivo || 0;
-            const v = fest > 0 ? Math.round((lab - fest) / fest * 100) : 0;
-            const col = v > 20 ? '#C8502A' : v > 0 ? '#C9973A' : '#5A8A5E';
-            const provName = d.origen.startsWith('41') ? 'Sevilla' : 'Málaga';
-            const muniName = MUNICIPIOS_SEV[d.origen] || MUNICIPIOS_MAL[d.origen] || d.origen;
-            return `<tr><td style="font-weight:500">${muniName}</td><td><span class="flow-badge tag-${provName === 'Sevilla' ? 'sev' : 'mal'}" style="font-size:11px">${provName}</span></td><td style="font-family:'Syne',sans-serif;font-weight:700">${lab.toLocaleString('es-ES')}</td><td style="color:var(--muted)">${fest.toLocaleString('es-ES')}</td><td style="color:${col};font-weight:700;font-family:'Syne',sans-serif">${v > 0 ? '+' : ''}${v}%</td></tr>`;
+        const muniMap = data.allMuni || {};
+        container.innerHTML = `<table class="rank-table"><thead><tr><th>Municipio</th><th>Provincia</th><th>Laborable</th><th>Festivo</th></tr></thead><tbody>${(data.comparativa || []).slice(0, 10).map(d => {
+            const name = muniMap[d.origen] || d.origen;
+            const prov = String(d.origen).startsWith('41') ? 'Sevilla' : 'Málaga';
+            return `<tr><td>${name}</td><td><span class="flow-badge">${prov}</span></td><td style="font-weight:700">${(d.laborable || 0).toLocaleString()}</td><td>${(d.festivo || 0).toLocaleString()}</td></tr>`;
         }).join('')}</tbody></table>`;
     },
 
     showSection: (name) => {
-        document.querySelectorAll('.page-section').forEach(s => s.classList.remove('active'));
-        document.getElementById(`section-${name}`).classList.add('active');
+        const sections = document.querySelectorAll('.page-section');
+        sections.forEach(s => s.classList.remove('active'));
+        const target = document.getElementById(`section-${name}`);
+        if (target) target.classList.add('active');
+
         document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-        const btn = document.querySelector(`.nav-btn[onclick*="${name}"]`);
+        const btn = document.querySelector(`.nav-btn[onclick*="'${name}'"]`);
         if (btn) btn.classList.add('active');
     }
 };
