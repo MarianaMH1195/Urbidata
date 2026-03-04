@@ -21,14 +21,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Servir archivos estáticos del frontend
-# Nota: La ruta 'frontend' debe ser relativa al CWD desde donde se lanza uvicorn
-app.mount("/static", StaticFiles(directory="frontend"), name="static")
-
-@app.get("/")
-async def read_index():
-    return FileResponse("frontend/index.html")
-
 @app.get("/health")
 async def health():
     return {"status": "ok", "message": "API de Urbidata operativa"}
@@ -71,6 +63,10 @@ async def get_legacy_data():
         "flujos": analysis.get_flujos(),
         "dormitorio": analysis.get_pueblos_dormitorio()
     }
+
+# IMPORTANTE: Montamos el frontend al FINAL para que las rutas de la API tengan prioridad.
+# Al usar html=True, visitar "/" servirá automáticamente "index.html".
+app.mount("/", StaticFiles(directory="frontend", html=True), name="frontend")
 
 if __name__ == "__main__":
     import uvicorn
