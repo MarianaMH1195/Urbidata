@@ -52,6 +52,29 @@ const UI = {
             // Control de capas (estilo nativo Leaflet posicionado arriba a la derecha)
             L.control.layers(baseMaps, overlays, { collapsed: false, position: 'topright' }).addTo(map);
 
+            // Leyenda Personalizada para Flujos
+            const legend = L.control({ position: 'bottomright' });
+            legend.onAdd = function () {
+                const div = L.DomUtil.create('div', 'map-legend');
+                div.innerHTML = `
+                    <div class="legend-title">Intensidad de Flujo</div>
+                    <div class="legend-item">
+                        <span class="legend-line" style="background:#C8502A;height:2.5px"></span>
+                        <span class="legend-text">Alto</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-line" style="background:#C9973A;height:1.8px"></span>
+                        <span class="legend-text">Medio</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-line" style="background:#7A9E7E;height:1.2px;background-image:linear-gradient(90deg,#7A9E7E 50%,transparent 50%);background-size:6px 100%"></span>
+                        <span class="legend-text">Bajo</span>
+                    </div>
+                `;
+                return div;
+            };
+            legend.addTo(map);
+
             const muniMap = data.allMuni || {};
             Object.keys(muniMap).forEach(k => {
                 const c = coords[k]; if (!c) return;
@@ -77,7 +100,7 @@ const UI = {
             filtered = filtered.filter(f => String(f.origen).startsWith('29') || String(f.destino).startsWith('29'));
         }
 
-        let top = filtered.slice(0, 40);
+        let top = filtered.slice(0, 30);
         const max = (top[0]?.viajes || top[0]?.total || 1);
         const muniMap = data.allMuni || {};
 
@@ -85,10 +108,55 @@ const UI = {
             const c1 = coords[f.origen], c2 = coords[f.destino]; if (!c1 || !c2) return;
             const val = f.viajes || f.total || 0;
             const norm = val / max;
-            const line = L.polyline([c1, c2], { weight: 2 + norm * 8, color: norm > 0.5 ? '#FF6B20' : norm > 0.2 ? '#F5C842' : '#7FE0A0', opacity: 0.75 + norm * 0.22, smoothFactor: 2 });
+
+            // Usamos una escala progresiva (raíz cuadrada) para que los flujos bajos tengan más presencia
+            const pNorm = Math.sqrt(norm);
+
+            // Colores solicitados
+            const color = norm > 0.5 ? '#C8502A' : norm > 0.2 ? '#C9973A' : '#7A9E7E';
+
+            // Grosor ajustado: mínimo 1.2px para visibilidad, máximo 2.8px (un poco más que 2.5 pero proporcional)
+            const weight = 1.0 + pNorm * 1.8;
+
+            // Capa 1 — halo suave (detrás) - Reforzado para contraste
+            const halo = L.polyline([c1, c2], {
+                weight: weight + 3.5,
+                color: color,
+                opacity: 0.15 + pNorm * 0.12,
+                smoothFactor: 2,
+                lineCap: 'round',
+                interactive: false
+            });
+
+            // Capa 2 — línea principal (encima) - Opacidad base aumentada
+            const line = L.polyline([c1, c2], {
+                weight: weight,
+                color: color,
+                opacity: 0.55 + pNorm * 0.35,
+                smoothFactor: 2,
+                lineCap: 'round',
+                dashArray: norm < 0.12 ? '5, 10' : undefined
+            });
+
             const n1 = muniMap[f.origen] || f.origen, n2 = muniMap[f.destino] || f.destino;
-            line.bindTooltip(`<strong>${n1} → ${n2}</strong><br>Viajes: ${val.toLocaleString('es-ES')}`);
-            line.addTo(map); flowLayers.push(line);
+            const t_lab = (f.laborable || 0).toLocaleString('es-ES');
+            const t_fes = (f.festivo || 0).toLocaleString('es-ES');
+
+            const tooltipContent = `
+                <div style="padding:4px">
+                    <strong style="color:#5C3D28;display:block;margin-bottom:4px">${n1} → ${n2}</strong>
+                    <span style="color:#A8917C;font-size:12px">
+                      Laborable: <strong style="color:#C8502A">${t_lab}</strong>
+                      &nbsp;·&nbsp;
+                      Festivo: <strong style="color:#C9973A">${t_fes}</strong>
+                    </span>
+                </div>`;
+
+            line.bindTooltip(tooltipContent, { sticky: true, className: 'tooltip-custom' });
+
+            halo.addTo(map);
+            line.addTo(map);
+            flowLayers.push(halo, line);
         });
     },
 
@@ -159,7 +227,45 @@ const UI = {
         chartComp = new Chart(ctx, { type: 'bar', data: { labels: top12.map(d => data.allMuni[d.origen] || d.origen), datasets }, options: UI.chartOpts('Desplazamientos', true) });
     },
 
-    chartOpts: (label, legend) => ({ responsive: true, maintainAspectRatio: false, plugins: { legend: { display: legend, labels: { color: '#C4A98A', font: { family: 'DM Sans' }, boxWidth: 12 } }, tooltip: { backgroundColor: '#FDFAF6', titleColor: '#5C3D28', bodyColor: '#A8917C', borderColor: 'rgba(60,35,10,0.09)', borderWidth: 1 } }, scales: { x: { grid: { color: 'rgba(60,35,10,0.04)' }, ticks: { color: '#C4A98A', font: { family: 'DM Sans', size: 11 }, maxRotation: 35 } }, y: { grid: { color: 'rgba(60,35,10,0.05)' }, ticks: { color: '#C4A98A', font: { family: 'DM Sans', size: 11 }, callback: v => v >= 1000 ? (v / 1000).toFixed(0) + 'k' : v } } } }),
+    chartOpts: (label, legend) => ({
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                display: legend,
+                labels: { color: '#C4A98A', font: { family: 'DM Sans', size: 12 }, boxWidth: 12 }
+            },
+            tooltip: {
+                backgroundColor: '#FDFAF6',
+                titleColor: '#5C3D28',
+                bodyColor: '#A8917C',
+                borderColor: 'rgba(60,35,10,0.09)',
+                borderWidth: 1,
+                padding: 10,
+                cornerRadius: 8
+            }
+        },
+        scales: {
+            x: {
+                grid: { color: 'rgba(60,35,10,0.04)', drawBorder: false },
+                ticks: { color: '#C4A98A', font: { family: 'DM Sans', size: 11 }, maxRotation: 35 }
+            },
+            y: {
+                grid: { color: 'rgba(60,35,10,0.05)', drawBorder: false },
+                ticks: {
+                    color: '#C4A98A', font: { family: 'DM Sans', size: 11 },
+                    callback: v => v >= 1000 ? (v / 1000).toFixed(0) + 'k' : v
+                }
+            }
+        }
+    }),
+
+    initReveal: () => {
+        const obs = new IntersectionObserver(entries => {
+            entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+        }, { threshold: 0.1 });
+        document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
+    },
 
     renderDormitorio: (data) => {
         UI.renderDormCards(data);
@@ -173,8 +279,9 @@ const UI = {
             const rClass = p > 25 ? 'high' : p > 15 ? 'med' : 'low';
             const prov = String(d.municipio).startsWith('41') ? 'Sevilla' : 'Málaga';
             const name = muniMap[d.municipio] || d.municipio;
-            return `<div class="dorm-card"><div class="dorm-city">${name}</div><div class="dorm-ratio ${rClass}">${p.toFixed(1)}%</div><div class="dorm-label">dependencia</div><div class="dorm-prov" style="color:var(--${prov.toLowerCase()})">${prov}</div></div>`;
+            return `<div class="dorm-card reveal"><div class="dorm-city">${name}</div><div class="dorm-ratio ${rClass}">${p.toFixed(1)}%</div><div class="dorm-label">dependencia</div><div class="dorm-prov" style="color:var(--${prov.toLowerCase()})">${prov}</div></div>`;
         }).join('');
+        UI.initReveal();
     },
 
     renderComparativa: (data) => {
@@ -187,7 +294,7 @@ const UI = {
         container.innerHTML = `<table class="rank-table"><thead><tr><th>Municipio</th><th>Provincia</th><th>Laborable</th><th>Festivo</th></tr></thead><tbody>${(data.comparativa || []).slice(0, 10).map(d => {
             const name = muniMap[d.origen] || d.origen;
             const prov = String(d.origen).startsWith('41') ? 'Sevilla' : 'Málaga';
-            return `<tr><td>${name}</td><td><span class="flow-badge">${prov}</span></td><td style="font-weight:700">${(d.laborable || 0).toLocaleString()}</td><td>${(d.festivo || 0).toLocaleString()}</td></tr>`;
+            return `<tr><td>${name}</td><td class="rank-num">${prov}</td><td style="font-family:'Syne';font-weight:700">${(d.laborable || 0).toLocaleString()}</td><td style="font-family:'Syne'">${(d.festivo || 0).toLocaleString()}</td></tr>`;
         }).join('')}</tbody></table>`;
     },
 
@@ -195,10 +302,20 @@ const UI = {
         const sections = document.querySelectorAll('.page-section');
         sections.forEach(s => s.classList.remove('active'));
         const target = document.getElementById(`section-${name}`);
-        if (target) target.classList.add('active');
+        if (target) {
+            target.classList.add('active');
+            // Trigger animation for reveal elements inside the section
+            const reveals = target.querySelectorAll('.reveal');
+            reveals.forEach(r => r.classList.remove('visible'));
+            setTimeout(() => UI.initReveal(), 50);
+        }
 
         document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
         const btn = document.querySelector(`.nav-btn[onclick*="'${name}'"]`);
         if (btn) btn.classList.add('active');
     }
 };
+
+document.addEventListener('DOMContentLoaded', () => {
+    UI.initReveal();
+});

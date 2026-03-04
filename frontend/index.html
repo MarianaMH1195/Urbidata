@@ -59,21 +59,53 @@
         </div>
         <div class="kpi-grid">
             <div class="kpi-card c1">
+                <div class="kpi-icon ic1">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                        <polygon points="3 11 22 2 13 21 11 13 3 11" />
+                    </svg>
+                </div>
                 <div class="kpi-value" id="kpi-total">—</div>
                 <div class="kpi-label">Total desplazamientos</div>
                 <div class="kpi-trend trend-up" id="kpi-period">—</div>
             </div>
             <div class="kpi-card c2">
+                <div class="kpi-icon ic2">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z" />
+                        <path d="M6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2" />
+                        <path d="M18 9h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2" />
+                        <path d="M10 6h4" />
+                        <path d="M10 10h4" />
+                        <path d="M10 14h4" />
+                        <path d="M10 18h4" />
+                    </svg>
+                </div>
                 <div class="kpi-value" id="kpi-municipios">30</div>
                 <div class="kpi-label">Municipios analizados</div>
                 <div class="kpi-trend" style="color:var(--muted)">Sev. + Mál.</div>
             </div>
             <div class="kpi-card c3">
+                <div class="kpi-icon ic3">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="18" cy="18" r="3" />
+                        <circle cx="6" cy="6" r="3" />
+                        <path d="M6 21V9a9 9 0 0 0 9 9" />
+                    </svg>
+                </div>
                 <div class="kpi-value" id="kpi-pares">—</div>
                 <div class="kpi-label">Pares O-D activos</div>
                 <div class="kpi-trend trend-up">Alta conectividad</div>
             </div>
             <div class="kpi-card c4">
+                <div class="kpi-icon ic4">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" />
+                    </svg>
+                </div>
                 <div class="kpi-value" id="kpi-dormitorio">—</div>
                 <div class="kpi-label">Pueblos dormitorio</div>
                 <div class="kpi-trend trend-dn">Dependencia laboral</div>
@@ -97,41 +129,77 @@
                 <option value="40">Top 40</option>
             </select>
             <button class="btn-primary" onclick="applyFilters()">
-                <span style="font-size: 18px;">↺</span> Actualizar
+                <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" />
+                    <path d="M21 3v5h-5" />
+                    <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" />
+                    <path d="M8 16H3v5" />
+                </svg>
+                Actualizar
             </button>
             <button class="btn-ghost" onclick="exportCSV()">
-                <span style="font-size: 18px;">📥</span> Exportar CSV
+                <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                    <polyline points="7 10 12 15 17 10" />
+                    <line x1="12" y1="15" x2="12" y2="3" />
+                </svg>
+                Exportar CSV
             </button>
         </div>
         <div id="section-dashboard" class="page-section active">
-            <div class="section reveal">
-                <div class="section-header">
-                    <div class="section-title">Mapa de Flujos Urbanos</div>
-                    <div class="toggle-group" id="mapProvToggle">
-                        <button class="toggle-btn active" onclick="toggleMapMode(this,'all')">Todos</button>
-                        <button class="toggle-btn" onclick="toggleMapMode(this,'sevilla')">Sevilla</button>
-                        <button class="toggle-btn" onclick="toggleMapMode(this,'malaga')">Málaga</button>
-                    </div>
-                </div>
-                <div class="panel">
-                    <div id="map"></div>
+            <div class="section-header reveal">
+                <h2 class="section-title">
+                    <div class="section-dot"></div>
+                    Mapa de Flujos Urbanos
+                </h2>
+                <div class="toggle-group" id="map-toggles">
+                    <button class="toggle-btn active" onclick="setMapMode('all', this)">Todos</button>
+                    <button class="toggle-btn" onclick="setMapMode('sevilla', this)">Sevilla</button>
+                    <button class="toggle-btn" onclick="setMapMode('malaga', this)">Málaga</button>
                 </div>
             </div>
-            <div class="grid-2 reveal">
-                <div class="panel">
+            <div class="panel reveal" style="margin-bottom: 32px;">
+                <div id="map"></div>
+            </div>
+
+            <div class="grid-2">
+                <div class="panel reveal">
                     <div class="panel-header">
-                        <div class="panel-title">Ranking de Municipios</div>
-                        <div class="toggle-group" id="rankingToggle"><button class="toggle-btn active"
-                                onclick="updateRanking('salidas',this)">Salidas</button><button class="toggle-btn"
-                                onclick="updateRanking('entradas',this)">Entradas</button></div>
+                        <h3 class="panel-title">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"
+                                stroke-linejoin="round">
+                                <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6" />
+                                <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18" />
+                                <path d="M4 22h16" />
+                                <path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22" />
+                                <path d="M14 14.66V17c0 .55(.47.98.97 1.21C16.15 18.75 17 20.24 17 22" />
+                                <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z" />
+                            </svg>
+                            Ranking de Municipios
+                        </h3>
+                        <div class="toggle-group">
+                            <button class="toggle-btn active" onclick="setRankingMode('salidas', this)">Salidas</button>
+                            <button class="toggle-btn" onclick="setRankingMode('entradas', this)">Entradas</button>
+                        </div>
                     </div>
                     <div class="panel-body">
                         <div id="ranking-list"></div>
                     </div>
                 </div>
-                <div class="panel">
+
+                <div class="panel reveal">
                     <div class="panel-header">
-                        <div class="panel-title">Top Flujos O-D</div>
+                        <h3 class="panel-title">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"
+                                stroke-linejoin="round">
+                                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+                            </svg>
+                            Top Flujos O-D
+                        </h3>
                     </div>
                     <div class="panel-body">
                         <div id="top-flujos-list"></div>
@@ -139,59 +207,82 @@
                 </div>
             </div>
         </div>
+
         <div id="section-flujos" class="page-section">
-            <div class="section reveal">
-                <div class="section-title">Distribución de flujos por par O-D</div>
-                <div class="panel">
-                    <div class="panel-body">
-                        <div class="chart-wrap"><canvas id="chart-flujos"></canvas></div>
+            <h2 class="section-title reveal" style="margin-bottom:20px">Análisis de Flujos</h2>
+            <div class="panel reveal">
+                <div class="panel-header">
+                    <h3 class="panel-title">Distribución de Viajes</h3>
+                </div>
+                <div class="panel-body">
+                    <div class="chart-wrap">
+                        <canvas id="chart-flujos"></canvas>
                     </div>
                 </div>
             </div>
         </div>
+
         <div id="section-dormitorio" class="page-section">
-            <div class="section reveal">
-                <div class="section-title">Municipios Dormitorio</div>
-                <div class="grid-2">
-                    <div class="panel">
-                        <div class="panel-body">
-                            <div class="chart-wrap"><canvas id="chart-dormitorio"></canvas></div>
+            <h2 class="section-title reveal" style="margin-bottom:20px">Pueblos Dormitorio</h2>
+            <div class="grid-2">
+                <div class="panel reveal">
+                    <div class="panel-header">
+                        <h3 class="panel-title">Top % Dependencia</h3>
+                    </div>
+                    <div class="panel-body">
+                        <div class="chart-wrap">
+                            <canvas id="chart-dormitorio"></canvas>
                         </div>
                     </div>
-                    <div class="panel">
-                        <div class="panel-body">
-                            <div id="dorm-cards" class="dorm-grid"></div>
-                        </div>
+                </div>
+                <div class="panel reveal">
+                    <div class="panel-header">
+                        <h3 class="panel-title">Municipios Analizados</h3>
+                    </div>
+                    <div class="panel-body">
+                        <div id="dorm-cards" class="dorm-grid"></div>
                     </div>
                 </div>
             </div>
         </div>
+
         <div id="section-comparativa" class="page-section">
-            <div class="section reveal">
-                <div class="section-header">
-                    <div class="section-title">Laborable vs. Festivo</div>
-                    <div class="toggle-group" id="compToggle">
-                        <button class="toggle-btn active" onclick="setCompView('ambos',this)">Ambos</button>
-                        <button class="toggle-btn" onclick="setCompView('laborable',this)">Laborable</button>
-                        <button class="toggle-btn" onclick="setCompView('festivo',this)">Festivo</button>
-                    </div>
+            <div class="section-header reveal">
+                <h2 class="section-title">
+                    <div class="section-dot"></div>
+                    Comparativa Laborable vs Festivo
+                </h2>
+                <div class="toggle-group">
+                    <button class="toggle-btn active" onclick="setCompView('ambos', this)">Ambos</button>
+                    <button class="toggle-btn" onclick="setCompView('laborable', this)">Laborable</button>
+                    <button class="toggle-btn" onclick="setCompView('festivo', this)">Festivo</button>
                 </div>
-                <div class="panel">
-                    <div class="panel-body">
-                        <div class="chart-wrap"><canvas id="chart-comparativa"></canvas></div>
-                    </div>
+            </div>
+            <div class="panel reveal">
+                <div class="panel-header">
+                    <h3 class="panel-title">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="m16 3 4 4-4 4" />
+                            <path d="M20 7H4" />
+                            <path d="m8 21-4-4 4-4" />
+                            <path d="M4 17h16" />
+                        </svg>
+                        Evolución de Movilidad
+                    </h3>
                 </div>
-                <div class="panel" style="margin-top:20px">
-                    <div class="panel-body">
-                        <div id="comp-table"></div>
+                <div class="panel-body">
+                    <div class="chart-wrap">
+                        <canvas id="chart-comparativa"></canvas>
                     </div>
+                    <div id="comp-table" style="margin-top: 24px;"></div>
                 </div>
             </div>
         </div>
-        <footer>
-            <div class="footer-left">Urbidata © 2026 · Datos: MITMA OpenData</div>
-        </footer>
     </div>
+    <footer>
+        <div class="footer-left">Urbidata © 2026 · Datos: MITMA OpenData</div>
+    </footer>
     <script src="js/config.js"></script>
     <script src="js/api.js"></script>
     <script src="js/ui.js"></script>

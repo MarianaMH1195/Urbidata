@@ -36,11 +36,11 @@ async function updateAllData(prov = null) {
 // Event Handlers
 window.showSection = (name) => UI.showSection(name);
 
-window.toggleMapMode = (btn, mode) => {
+window.setMapMode = (mode, btn) => {
     try {
         if (!globalData) return;
         window.mapMode = mode;
-        document.querySelectorAll('#mapProvToggle .toggle-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('#map-toggles .toggle-btn').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
         UI.drawFlows(globalData, Api.getCoords(), window.mapMode);
     } catch (e) { console.error("Toggle Map Region Error:", e); }
@@ -53,11 +53,12 @@ window.applyFilters = async () => {
     } catch (e) { console.error("Apply Filters Error:", e); }
 };
 
-window.updateRanking = (mode, btn) => {
+window.setRankingMode = (mode, btn) => {
     try {
         if (!globalData) return;
         window.rankMode = mode;
-        document.querySelectorAll('#rankingToggle .toggle-btn').forEach(b => b.classList.remove('active'));
+        // Buscamos el contenedor padre del botón para resetear activos en ese grupo específico
+        btn.closest('.toggle-group').querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
         UI.renderRanking(globalData, window.rankMode);
     } catch (e) { console.error("Update Ranking Error:", e); }
@@ -67,7 +68,7 @@ window.setCompView = (mode, btn) => {
     try {
         if (!globalData) return;
         window.compView = mode;
-        document.querySelectorAll('#compToggle .toggle-btn').forEach(b => b.classList.remove('active'));
+        btn.closest('.toggle-group').querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
         UI.initChartComparativa(globalData, window.compView);
     } catch (e) { console.error("Set Comp View Error:", e); }
