@@ -6,20 +6,29 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 from fastapi import FastAPI, Query
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 import analysis
 
 app = FastAPI(title="Urbidata API", description="API para el análisis de movilidad urbana en Sevilla y Málaga")
 
-# Configuración de CORS - Vital para conectar con el frontend
+# Configuración de CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"], # Permitir todos los orígenes en desarrollo
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
+# Servir archivos estáticos del frontend
+# Nota: La ruta 'frontend' debe ser relativa al CWD desde donde se lanza uvicorn
+app.mount("/static", StaticFiles(directory="frontend"), name="static")
+
 @app.get("/")
+async def read_index():
+    return FileResponse("frontend/index.html")
+
 @app.get("/health")
 async def health():
     return {"status": "ok", "message": "API de Urbidata operativa"}
