@@ -22,32 +22,12 @@ body {
     font-family: 'DM Sans', sans-serif;
     font-weight: 400;
     background: var(--bg);
-    color: var(--text);
+    color: #4A3728;
     overflow-x: hidden;
     -webkit-font-smoothing: antialiased;
 }
 
-h1,
-h2,
-.logo-text,
-.kpi-value {
-    font-family: 'Syne', sans-serif;
-    font-weight: 800;
-}
-
-h3,
-.panel-title,
-.section-title,
-.nav-btn.active {
-    font-family: 'Syne', sans-serif;
-    font-weight: 700;
-}
-
-p,
-.hero-desc,
-footer {
-    font-weight: 300;
-}
+/* Typography Mapping is handled per element below */
 
 .bg-grid {
     position: fixed;
@@ -178,18 +158,28 @@ header {
     font-family: 'Syne', sans-serif;
     font-weight: 800;
     font-size: 18px;
-    color: #fff;
+    color: #ffffff;
     box-shadow: 0 0 20px rgba(200, 80, 42, 0.35);
 }
 
 .logo-text {
     font-family: 'Syne', sans-serif;
-    font-weight: 800;
+    font-weight: 700;
     font-size: 22px;
+    letter-spacing: -0.5px;
+    color: #4A3728;
 }
 
 .logo-text span {
     color: var(--accent);
+}
+
+.logo-sub {
+    font-size: 11px;
+    font-weight: 400;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: #C4A98A;
 }
 
 nav {
@@ -214,17 +204,66 @@ nav {
 .nav-btn.active {
     background: rgba(200, 80, 42, 0.1);
     color: #C8502A;
+    font-weight: 400;
+}
+
+.header-badge {
+    background: rgba(200, 80, 42, 0.08);
+    border: 1px solid rgba(200, 80, 42, 0.15);
+    border-radius: 100px;
+    padding: 6px 14px;
+    color: #C8502A;
+    font-size: 13px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.pulse {
+    width: 8px;
+    height: 8px;
+    background: #C8502A;
+    border-radius: 50%;
+    box-shadow: 0 0 8px rgba(200, 80, 42, 0.4);
+    position: relative;
+}
+
+.pulse::after {
+    content: '';
+    position: absolute;
+    inset: -2px;
+    border-radius: 50%;
+    border: 2px solid rgba(200, 80, 42, 0.2);
 }
 
 .hero {
-    padding: 64px 0 48px;
+    padding: 100px 0 48px;
+}
+
+.hero-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+    color: #7A9E7E;
+    background: rgba(122, 158, 126, 0.1);
+    border: 1px solid rgba(122, 158, 126, 0.25);
+    border-radius: 100px;
+    padding: 6px 16px;
+    margin-bottom: 24px;
 }
 
 h1 {
     font-family: 'Syne', sans-serif;
     font-weight: 700;
-    font-size: 48px;
-    line-height: 1.1;
+    font-size: clamp(36px, 5vw, 64px);
+    line-height: 1.08;
+    letter-spacing: -1.5px;
+    color: #3D2B1F;
     margin-bottom: 20px;
 }
 
@@ -234,6 +273,8 @@ h1 .line2 {
 
 .hero-desc {
     font-size: 16px;
+    font-weight: 300;
+    line-height: 1.75;
     color: #B09880;
     max-width: 480px;
 }
@@ -333,10 +374,10 @@ h1 .line2 {
 
 .kpi-label {
     font-size: 12px;
-    color: #C4A98A;
+    font-weight: 400;
     text-transform: uppercase;
     letter-spacing: 1px;
-    font-weight: 400;
+    color: #C4A98A;
 }
 
 .kpi-trend {
@@ -395,10 +436,10 @@ h1 .line2 {
 
 .filter-label {
     font-size: 12px;
-    color: #C4A98A;
+    font-weight: 400;
     text-transform: uppercase;
     letter-spacing: 1px;
-    font-weight: 400;
+    color: #C4A98A;
 }
 
 .filter-select {
@@ -409,6 +450,7 @@ h1 .line2 {
     padding: 8px 12px;
     font-size: 13px;
     font-family: 'DM Sans', sans-serif;
+    font-weight: 400;
     cursor: pointer;
     outline: none;
     transition: border-color 0.2s;
@@ -530,10 +572,10 @@ h1 .line2 {
 
 .rank-table th {
     font-size: 11px;
+    font-weight: 400;
     text-transform: uppercase;
     letter-spacing: 1px;
     color: #C4A98A;
-    font-weight: 400;
     padding: 0 12px 12px 0;
     text-align: left;
 }
@@ -542,14 +584,22 @@ h1 .line2 {
     padding: 10px 12px 10px 0;
     border-top: 1px solid var(--border);
     font-size: 14px;
+    font-weight: 400;
     color: #6B4E38;
     vertical-align: middle;
 }
 
-.rank-num {
+.rank-val {
     font-family: 'Syne', sans-serif;
     font-weight: 700;
-    color: var(--muted);
+    font-size: 15px;
+}
+
+.rank-num {
+    font-family: 'Syne', sans-serif;
+    font-weight: 600;
+    font-size: 15px;
+    color: #C4A98A;
 }
 
 .rank-bar {
@@ -577,10 +627,24 @@ h1 .line2 {
     padding: 16px;
 }
 
+.dorm-city {
+    font-size: 15px;
+    font-weight: 500;
+    color: #5C3D28;
+    margin-bottom: 4px;
+}
+
 .dorm-ratio {
+    font-family: 'Syne', sans-serif;
     font-weight: 700;
-    font-size: 22px;
+    font-size: 26px;
     color: var(--accent);
+}
+
+.dorm-label {
+    font-size: 11px;
+    font-weight: 400;
+    color: #C4A98A;
 }
 
 #map {
@@ -613,6 +677,7 @@ h1 .line2 {
     padding: 6px 10px !important;
     box-shadow: 0 10px 30px rgba(60, 35, 10, 0.1) !important;
     font-size: 12px !important;
+    font-family: 'DM Sans', sans-serif;
 }
 
 .map-legend {
@@ -649,8 +714,8 @@ h1 .line2 {
 
 .legend-text {
     font-size: 12px;
-    color: #5C3D28;
-    font-weight: 500;
+    color: #A8917C;
+    font-weight: 400;
 }
 
 .tooltip-custom {
@@ -661,6 +726,7 @@ h1 .line2 {
     padding: 6px 10px !important;
     color: #4A3728 !important;
     font-size: 13px !important;
+    font-family: 'DM Sans', sans-serif;
 }
 
 .page-section {
@@ -733,6 +799,7 @@ footer {
 .footer-link {
     font-size: 13px;
     color: #C4A98A;
+    font-weight: 300;
     text-decoration: none;
     transition: color 0.2s;
 }
@@ -771,6 +838,7 @@ footer {
     border-radius: 8px;
     cursor: pointer;
     font-family: 'DM Sans', sans-serif;
+    font-weight: 400;
     transition: all 0.2s;
     display: inline-flex;
     align-items: center;
@@ -789,9 +857,9 @@ footer {
 
 .badge {
     font-size: 12px;
+    font-weight: 600;
     padding: 3px 10px;
     border-radius: 20px;
-    font-weight: 600;
     display: inline-flex;
     align-items: center;
     gap: 4px;

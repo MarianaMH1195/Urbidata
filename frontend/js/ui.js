@@ -233,7 +233,11 @@ const UI = {
         plugins: {
             legend: {
                 display: legend,
-                labels: { color: '#C4A98A', font: { family: 'DM Sans', size: 12 }, boxWidth: 12 }
+                labels: {
+                    color: '#C4A98A',
+                    font: { family: 'DM Sans', size: 11 },
+                    boxWidth: 12
+                }
             },
             tooltip: {
                 backgroundColor: '#FDFAF6',
@@ -242,18 +246,25 @@ const UI = {
                 borderColor: 'rgba(60,35,10,0.09)',
                 borderWidth: 1,
                 padding: 10,
-                cornerRadius: 8
+                cornerRadius: 8,
+                titleFont: { family: 'DM Sans', size: 13, weight: 600 },
+                bodyFont: { family: 'DM Sans', size: 12 }
             }
         },
         scales: {
             x: {
                 grid: { color: 'rgba(60,35,10,0.04)', drawBorder: false },
-                ticks: { color: '#C4A98A', font: { family: 'DM Sans', size: 11 }, maxRotation: 35 }
+                ticks: {
+                    color: '#C4A98A',
+                    font: { family: 'DM Sans', size: 11 },
+                    maxRotation: 35
+                }
             },
             y: {
                 grid: { color: 'rgba(60,35,10,0.05)', drawBorder: false },
                 ticks: {
-                    color: '#C4A98A', font: { family: 'DM Sans', size: 11 },
+                    color: '#C4A98A',
+                    font: { family: 'DM Sans', size: 11 },
                     callback: v => v >= 1000 ? (v / 1000).toFixed(0) + 'k' : v
                 }
             }
