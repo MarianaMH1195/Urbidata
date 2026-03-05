@@ -121,3 +121,4 @@ comparativa.to_csv(f"{OUTPUT_DIR}/comparativa_lab_fest.csv", index=False)
 print(f'  ✅ comparativa_lab_fest.csv → {comparativa.shape[0]} filas')
 
 print('\n🎉 Pipeline completado. CSVs disponibles en data/output/')
+
