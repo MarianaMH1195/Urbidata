@@ -61,5 +61,5 @@ CHUNK_SIZE = 100_000
 # Umbral para clasificar pueblos dormitorio (% de viajes a capital)
 DORMITORIO_THRESHOLD = 15.0
 
-print(f"✅ Configuración cargada correctamente.")
+print("✅ Configuración cargada correctamente.")
 print(f"📍 Analizando provincias: {PROVINCIAS_IDS}")

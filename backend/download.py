@@ -6,7 +6,7 @@ Usa la librería pySpainMobility para automatizar el proceso.
 
 import os
 import sys
-from config import RAW_DIR, DATE_START, DATE_END
+from config import RAW_DIR, DATE_START, DATE_END, VERSIONS,
 
 # Intentar importar pySpainMobility
 try:
@@ -28,9 +28,9 @@ def run_download():
 
     try:
         # Configuramos el objeto de movilidad
-        # Usamos version=2 por defecto (datos modernos)
+        # Usamos version 1 y 2 (configurada en config.py)
         mob = Mobility(
-            version=2,
+            version=VERSIONS,
             zones="municipios",
             start_date=DATE_START,
             end_date=DATE_END,
