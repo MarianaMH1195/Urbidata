@@ -84,16 +84,24 @@ def process_files():
 
     if lista_final:
         # Unimos todos los trozos filtrados
-        #Fragmento 9: La Unión y el Guardado Final
+        #Fragmento 9: La Unión y el Doble Guardado Final (CSV + Parquet)
         df_final = pd.concat(lista_final, ignore_index=True) #pd.contact() pega todos los trozos filtrados uno debajo de otro. "ignore_index=True." Resetea los números de fila para que vayan de 0 hasta el final, sin saltos.
         
-        # Guardamos el resultado
-        ruta_salida = PROCESSED_DIR / "datos_limpios_provincias.csv"
-        df_final.to_csv(ruta_salida, index=False) # Acción: to_csv con index=False. Guarda el archivo pero SIN la columna de números de fila (que suele estorbar en el dashboard).
+        # 1. Guardamos el resultado en CSV (Para compatibilidad con Excel/Looker)
+        ruta_csv = PROCESSED_DIR / "datos_limpios_provincias.csv"
+        df_final.to_csv(ruta_csv, index=False) # Acción: to_csv con index=False. Guarda el archivo pero SIN la columna de números de fila (que suele estorbar en el dashboard).
         
-        print(f"\n✅ ¡Limpieza completada!")
+        # 2. Segundo Guardado: Formato Parquet (Para máxima velocidad en el Backend)
+        # Usamos .with_suffix(".parquet") para cambiar la extensión ".csv" por ".parquet" automáticamente
+        ruta_parquet = ruta_csv.with_suffix(".parquet")
+
+        # Guardamos en parquet usando el motor 'pyarrow' o 'fastparquet' (Pandas lo elige solo)
+        df_final.to_parquet(ruta_parquet, index=False) # Acción: to_parquet con index=False. Guarda el archivo pero SIN la columna de números de fila (que suele estorbar en el dashboard).
+        
+        print(f"\n✅ ¡Limpieza y Optimización completada!")
         print(f" Filas finales: {len(df_final)}")
-        print(f" Guardado en: {ruta_salida}")
+        print(f" Archivo CSV Guardado en: {ruta_csv}")
+        print(f" Archivo Parquet Guardado en: {ruta_parquet} (Formato ultrarrápido y listo para analysis.py)")
     else:
         print(" No se encontraron datos que coincidan con las provincias seleccionadas.")
 
