@@ -172,3 +172,18 @@ estratégicas. Implementa carga híbrida (Parquet/CSV), categorización humana d
 indicadores y comparativas de flujos mediante conjuntos (sets). 
 Es el corazón lógico que alimenta al Front-end de Urbidata.
 """
+
+def run_analysis():
+    print("Iniciando análisis lógico de datos...")
+    
+    # Probando algunos datos para ver que funciona:
+    ranking_sevilla = get_ranking("sevilla", 5)
+    print(f"Top 5 Orígenes en Sevilla: {ranking_sevilla}")
+    
+    pueblos_málaga = get_pueblos_dormitorio("málaga")
+    print(f"Se identificaron {len(pueblos_málaga)} municipios con dependencia en Málaga.")
+    
+    print("Análisis métrico completado.")
+
+if __name__ == "__main__":
+    run_analysis()

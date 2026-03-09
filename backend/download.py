@@ -35,27 +35,19 @@ def run_download():
     print(f" Destino: {RAW_DIR}")
 
     try:
-        # Configuramos el objeto de movilidad (Le decimos que queremos datos por "municipios" y para las 
-        # fechas que configuramos en el cerebro.)
-        # Usamos version 1 y 2 (configurada en config.py)
+        # Configuramos el objeto de movilidad
+        # La versión actual del MITMA (2022-actualidad) es la versión 2.
+        # Las subzonas ahora se llaman "municipalities" (municipios en la API nueva)
         mob = Mobility(
-            version=VERSIONS,
-            zones="municipios",
+            version=2, # Usamos la versión 2 para datos de 2024
+            zones="municipalities",
             start_date=DATE_START,
             end_date=DATE_END,
-            output_directory=str(RAW_DIR) #aunque RAW_DIR es un objeto Path (muy moderno), algunas librerías
-            #antiguas prefieres los archivos como strings de toda la vida. Aqui lo convertimos a string para 
-            #asegurar compatibilidad.
-            #Nota: Esto solo descarga los archivos, no los lee aún.
+            output_directory=str(RAW_DIR)
         )
 
-        # Ejecutamos la descarga, la acción real
-        # Nota: Esto solo descarga los archivos. Se conecta al servidor, busca los archivos .csv.gz 
-        # (comprimidos) y los descarga uno a uno en la carpeta backend/data/raw/
-
-        #Aquí todavía no "vemos" los datos por dentro. Solo estamos moviendo cajas cerradas desde el 
-        # almacén del gobierno a nuestro almacén local.
-        mob.download_data()
+        # Ejecutamos la descarga (método actualizado para datos de origen-destino)
+        mob.get_od_data(return_df=False)
         
         print("\n✅ Descarga completada con éxito.")
         print(f"Verifica los archivos en: {RAW_DIR}")

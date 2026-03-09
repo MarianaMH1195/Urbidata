@@ -27,81 +27,63 @@ def process_files():
     Es una forma elegante de decir: "Mira en la carpeta raw, coge todos los nombres de archivo, pero SOLO 
     si terminan en .csv.gz".
     """
-    archivos = [f for f in os.listdir(RAW_DIR) if f.endswith(".csv.gz")]
+    archivos = sorted([f for f in os.listdir(RAW_DIR) if f.endswith(".csv.gz")])
     
-# Esta es la Red de Seguridad: Si la lista está vacía (if not archivos), el programa se detiene con 
-# un mensaje de error en lugar de fallar silenciosamente.
-
     if not archivos:
         print(f"❌ No se encontraron archivos para procesar en {RAW_DIR}")
         return
 
-    print(f"Iniciando limpieza de {len(archivos)} archivos...")
+    total_archivos = len(archivos)
+    print(f"Iniciando limpieza de {total_archivos} archivos...")
     
-#Fragmento 3: El procesado por trozos (Chunking), este es el Bucle de los Archivos
+    lista_final = []
 
-    lista_final = [] # creamos una "bandeja" vacía donde iremos dejando los datos limpios que saquemos 
-    #de cada archivo.
+    for idx, nombre_archivo in enumerate(archivos, 1):
+        ruta_completa = os.path.join(RAW_DIR, nombre_archivo)
+        print(f"\n[{idx}/{total_archivos}] Procesando: {nombre_archivo}...")
 
-    for nombre_archivo in sorted(archivos): # ordenamos los archivos (normalmente por fecha en el nombre) para procesarlos en orden.
-        ruta_completa = os.path.join(RAW_DIR, nombre_archivo) # path es la forma segura de unir la carpeta con el nombre del archivo. el os.path.join es un "traductor inteligente" que mira el ordenador (Windows o Mac/Linux) y pone la barra correcta automaticamente, es decir, si es un Windows, pone la barra \, y si es un Mac o Linux, la barra /. Esto hace que el código sea universal.
-        print(f"Procesando: {nombre_archivo} (usando chunks de {CHUNK_SIZE} filas)")
-
-        # fragmento 4: Leemos el archivo por trozos para no colapsar la memoria RAM
         chunks = pd.read_csv(
             ruta_completa, 
-            sep="|",             # El MITMA usa '|' como separador
+            sep="|",
             compression="gzip", 
             chunksize=CHUNK_SIZE,
-            dtype=str            # Leemos todo como texto inicialmente por seguridad
+            dtype=str
         )
-#Fragmento 5: Detectamos las etiquetas (Identify Columns)
-        for i, chunk in enumerate(chunks):
-            # Identificar columnas (pueden variar según la versión del MITMA)
-            # Buscamos columnas que contengan 'origen' y 'destino'
-            col_origen = [c for c in chunk.columns if 'origen' in c.lower()][0] #"comprensión de lista". Busca en todos los nombres de columna y, si encuentra la palabra "origen", la mete en la lista. El [0] final coge el primer resultado.
-            col_destino = [c for c in chunk.columns if 'destino' in c.lower()][0] #resultado final: Aseguramos que col_origen siempre tenga el nombre exacto que el MITMA haya decidido usar ese día.
 
-            # Fragmento 6: Filtrar por provincia (Masking)
-            # Los dos primeros dígitos del código de municipio indican la provincia
+        for i, chunk in enumerate(chunks):
+            # Identificar columnas
+            col_origen = [c for c in chunk.columns if 'origen' in c.lower()][0]
+            col_destino = [c for c in chunk.columns if 'destino' in c.lower()][0]
+
+            # Filtrar por provincia
             mask = (
-                chunk[col_origen].str[:2].isin(PROVINCIAS_IDS) | #.str[:2] es "Slicing". Cortamos los dos primeros dígitos del ID. El símbolo | es el operador "OR".
+                chunk[col_origen].str[:2].isin(PROVINCIAS_IDS) | 
                 chunk[col_destino].str[:2].isin(PROVINCIAS_IDS)
             )
             
-            filtrado = chunk[mask].copy() #el "copy()" Crea un nuevo espacio en memoria para filtrado. Si no lo pones, Pandas te daría una advertencia de "SettingWithCopyWarning" más adelante.
+            filtrado = chunk[mask].copy()
 
-#Fragmento 7: Limpieza de tipos (Numeric Conversion)
             if not filtrado.empty:
-                # Limpieza básica
-                # Convertimos la columna viajes a número
-                filtrado['viajes'] = pd.to_numeric(filtrado['viajes'], errors='coerce')  #"errors='coerce'" es vital. Si por algún error del MITMA viene un texto tipo "N/A" en los viajes, lo convierte en NaN (nulo) en lugar de dar error.
-                lista_final.append(filtrado) #accion: Solo si el trozo tiene datos (if not filtrado.empty), lo guardamos en nuestra "bandeja" lista_final.
+                filtrado['viajes'] = pd.to_numeric(filtrado['viajes'], errors='coerce')
+                lista_final.append(filtrado)
             
-            # Fragmento 8: El monitor de Progreso
-            if i % 10 == 0 and i > 0:
-                print(f"   ... procesados {i * CHUNK_SIZE} filas del archivo actual")
+            # Monitor de progreso más frecuente
+            if i % 5 == 0 and i > 0:
+                print(f"   -> {i * CHUNK_SIZE} filas analizadas en este archivo...")
 
     if lista_final:
-        # Unimos todos los trozos filtrados
-        #Fragmento 9: La Unión y el Doble Guardado Final (CSV + Parquet)
-        df_final = pd.concat(lista_final, ignore_index=True) #pd.contact() pega todos los trozos filtrados uno debajo de otro. "ignore_index=True." Resetea los números de fila para que vayan de 0 hasta el final, sin saltos.
+        print("\nConcatenando y guardando resultados...")
+        df_final = pd.concat(lista_final, ignore_index=True)
         
-        # 1. Guardamos el resultado en CSV (Para compatibilidad con Excel/Looker)
         ruta_csv = PROCESSED_DIR / "datos_limpios_provincias.csv"
-        df_final.to_csv(ruta_csv, index=False) # Acción: to_csv con index=False. Guarda el archivo pero SIN la columna de números de fila (que suele estorbar en el dashboard).
+        df_final.to_csv(ruta_csv, index=False)
         
-        # 2. Segundo Guardado: Formato Parquet (Para máxima velocidad en el Backend)
-        # Usamos .with_suffix(".parquet") para cambiar la extensión ".csv" por ".parquet" automáticamente
         ruta_parquet = ruta_csv.with_suffix(".parquet")
-
-        # Guardamos en parquet usando el motor 'pyarrow' o 'fastparquet' (Pandas lo elige solo)
-        df_final.to_parquet(ruta_parquet, index=False) # Acción: to_parquet con index=False. Guarda el archivo pero SIN la columna de números de fila (que suele estorbar en el dashboard).
+        df_final.to_parquet(ruta_parquet, index=False)
         
-        print(f"\n✅ ¡Limpieza y Optimización completada!")
+        print(f"\n✅ ¡PROCESO COMPLETADO!")
         print(f" Filas finales: {len(df_final)}")
-        print(f" Archivo CSV Guardado en: {ruta_csv}")
-        print(f" Archivo Parquet Guardado en: {ruta_parquet} (Formato ultrarrápido y listo para analysis.py)")
+        print(f" Archivos guardados en: {PROCESSED_DIR}")
     else:
         print(" No se encontraron datos que coincidan con las provincias seleccionadas.")
 
