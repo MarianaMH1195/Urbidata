@@ -30,7 +30,7 @@ def process_files():
     archivos = sorted([f for f in os.listdir(RAW_DIR) if f.endswith(".csv.gz")])
     
     if not archivos:
-        print(f"❌ No se encontraron archivos para procesar en {RAW_DIR}")
+        print(f"No se encontraron archivos para procesar en {RAW_DIR}")
         return
 
     total_archivos = len(archivos)

@@ -53,7 +53,7 @@ def run_download():
         print(f"Verifica los archivos en: {RAW_DIR}")
 
     except Exception as e:
-        print(f"\n⚠️ Error durante la descarga: {e}")
+        print(f"\nError durante la descarga: {e}")
         print("Sugerencia: Revisa tu conexión a internet o si el servidor del MITMA está caído.")
 
 if __name__ == "__main__":

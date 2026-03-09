@@ -24,11 +24,11 @@ def run_pipeline():
     cleaning.process_files()
 
     # 3. Análisis (Cálculo de métricas)
-    print("\n Análisis de datos (Próximamente el lunes...)")
+    print("\n Análisis de datos (hoy no, mañana...)")
     analysis.run_analysis()
 
     # 4. Mapas (Visualización)
-    print("\n Generación de mapas (Próximamente el lunes...)")
+    print("\n Generación de mapas (hoy no, mañana...)")
     maps.generate_maps()
 
     print("\n" + "="*50)
