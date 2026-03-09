@@ -27,7 +27,10 @@ import warnings
 from config import PROCESSED_DIR, OUTPUT_DIR
 
 # Configuraciones iniciales y de estilo
-warnings.filterwarnings('ignore') # Configuraciones silenciosas. Ignorar warnings para no ensuciar la consola. 
+# Esta línea sirve para "silenciar" avisos técnicos que no son errores, 
+# pero que ensucian la consola (como avisos de futuras versiones de pandas).
+warnings.filterwarnings('ignore') 
+
 pd.set_option('display.max_columns', None) # Mostrar todas las columnas
 pd.set_option('display.max_rows', 100) # Mostrar hasta 100 filas
 sns.set_style('whitegrid') # Fondo blanco para las gráficas
@@ -113,7 +116,11 @@ def run_eda():
     print("\n--- 5. ANÁLISIS UNIVARIABLE Y GRÁFICAS ---")
     
     # 5.1 Histogramas: Distribución de la variable 'viajes'
-    # Recortamos el percentil 95% para evitar que outliers aplasten la gráfica visualmente
+    
+    # Los "Outliers" (valores extremos) pueden deformar las gráficas.
+    # Usamos el percentil 95 (quantile(0.95)) para quedarnos con el "95% de los datos normales"
+    # y así poder ver bien la forma de la montaña en el histograma sin que las rutas 
+    # gigantescas nos aplasten la imagen.
     limite = df_copy['viajes'].quantile(0.95)
     datos_normales = df_copy[df_copy['viajes'] < limite]
     
