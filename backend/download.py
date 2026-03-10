@@ -11,10 +11,12 @@ import os
 import sys
 import config
 
-# Intentar importar pySpainMobility
-# este try-except es una red de seguridad. Si la librería pySpainMobility no estuviera instalada, 
-# el programa no "rompería" con un error feo, sino que te daría un mensaje amigable y se cerraría 
-# ordenadamente con sys.exit(1).
+"""
+Intentar importar pySpainMobility
+este try-except es una red de seguridad. Si la librería pySpainMobility no estuviera instalada, 
+el programa no "rompería" con un error feo, sino que te daría un mensaje amigable y se cerraría 
+ordenadamente con sys.exit(1).
+"""
 try:
     from pyspainmobility.mobility.mobility import Mobility
     print("✅ pySpainMobility detectado.")
