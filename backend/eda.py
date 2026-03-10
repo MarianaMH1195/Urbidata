@@ -24,7 +24,7 @@ import os # Para leer y guardar archivos en el sistema
 import warnings
 
 # Importamos rutas importantes desde nuestro archivo de configuración
-from config import PROCESSED_DIR, OUTPUT_DIR
+import config   
 
 # Configuraciones iniciales y de estilo
 # Esta línea sirve para "silenciar" avisos técnicos que no son errores, 
@@ -50,8 +50,8 @@ def run_eda():
     # ==========================================
     # 2. DATASET LOAD
     # ==========================================
-    ruta_parquet = PROCESSED_DIR / "datos_limpios_provincias.parquet"
-    ruta_csv = PROCESSED_DIR / "datos_limpios_provincias.csv"
+    ruta_parquet = config.PROCESSED_DIR / "datos_limpios_provincias.parquet"
+    ruta_csv = config.PROCESSED_DIR / "datos_limpios_provincias.csv"
     
     df = None
     if os.path.exists(ruta_parquet):
@@ -107,7 +107,7 @@ def run_eda():
     print(nulos[nulos > 0] if not nulos[nulos > 0].empty else "✅ ¡No hay valores nulos en el dataset!")
     
     # Creamos carpeta para guardar las gráficas
-    graficos_dir = OUTPUT_DIR / "graficos_eda"
+    graficos_dir = config.OUTPUT_DIR / "graficos_eda"
     os.makedirs(graficos_dir, exist_ok=True)
     
     # ==========================================
@@ -115,12 +115,13 @@ def run_eda():
     # ==========================================
     print("\n--- 5. ANÁLISIS UNIVARIABLE Y GRÁFICAS ---")
     
-    # 5.1 Histogramas: Distribución de la variable 'viajes'
-    
-    # Los "Outliers" (valores extremos) pueden deformar las gráficas.
-    # Usamos el percentil 95 (quantile(0.95)) para quedarnos con el "95% de los datos normales"
-    # y así poder ver bien la forma de la montaña en el histograma sin que las rutas 
-    # gigantescas nos aplasten la imagen.
+    """5.1 Histogramas: Distribución de la variable 'viajes'
+    Eliminamos la distribución entera. Se deja unicamente en el eda interactivo.
+    Los "Outliers" (valores extremos) pueden deformar las gráficas.
+    Usamos el percentil 95 (quantile(0.95)) para quedarnos con el "95% de los 
+    datos normales y así poder ver bien la forma de la montaña en el histograma 
+    sin que las rutas gigantescas nos aplasten la imagen."""
+
     limite = df_copy['viajes'].quantile(0.95)
     datos_normales = df_copy[df_copy['viajes'] < limite]
     
@@ -147,9 +148,12 @@ def run_eda():
     # ==========================================
     print("\n--- 6. ANÁLISIS BIVARIABLE ---")
     
-    # Vamos a analizar el total de viajes desde los Top 10 Orígenes
+    """Vamos a analizar el total de viajes desde los Top 10 Orígenes, cada 
+    municipio que mas viajes generan y los separa por provincia para despues hacer 
+    la gráfica. """
+
     top_origenes = df_copy.groupby('origen')['viajes'].sum().sort_values(ascending=False).head(10).reset_index()
-    
+    # agrupa los orignes por viajes y ordena de mayor a menor y muestyra solamente los 10 primeros.
     # 6.1 Barras (Relacionando Variables Categóricas vs Numéricas)
     plt.figure()
     sns.barplot(data=top_origenes, x='origen', y='viajes', palette="Blues_r")
@@ -166,9 +170,14 @@ def run_eda():
     # 7. MATRIZ DE CORRELACIÓN (HEATMAP)
     # ==========================================
     print("\n--- 7. ANÁLISIS DE CORRELACIÓN (HEATMAP) ---")
-    # Solo podemos hacer matriz de correlación numérica si tenemos más columnas numéricas.
-    # Como ejemplo sacamos la correlación entre las columnas numéricas. Si solo está 'viajes', 
-    # la matriz será pequeña 1x1, pero la estructura está creada para cuando haya más métricas.
+    
+    """
+    Solo podemos hacer matriz de correlación numérica si tenemos más columnas 
+    numéricas. Como ejemplo sacamos la correlación entre las columnas numéricas. 
+    Si solo está 'viajes', la matriz será pequeña 1x1, pero la estructura está 
+    creada para cuando haya más métricas.
+    """
+
     cols_numericas = df_copy.select_dtypes(include=[np.number])
     if len(cols_numericas.columns) > 1:
         correlacion = cols_numericas.corr()

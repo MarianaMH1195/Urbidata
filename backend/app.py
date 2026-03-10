@@ -3,7 +3,7 @@ Urbidata - Orquestador del Pipeline (APP)
 Este archivo es el punto de entrada. Ejecuta todo el proceso en orden.
 """
 
-from config import PROVINCIAS_IDS
+import config
 import download
 import cleaning
 import analysis
