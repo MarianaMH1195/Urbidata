@@ -9,8 +9,7 @@ sale a Internet, va al servidor del MITMA y se trae los archivos pesados a tu or
 
 import os
 import sys
-from config import RAW_DIR, DATE_START, DATE_END, VERSIONS  #aqui le pedimos las variables que definimos 
-#en config.py, el objeto path, los strings de fechas, y las listas de versiones.
+import config
 
 # Intentar importar pySpainMobility
 # este try-except es una red de seguridad. Si la librería pySpainMobility no estuviera instalada, 
@@ -31,26 +30,26 @@ def run_download():
     Descarga archivos comprimidos (.csv.gz) en la carpeta raw.
     """
     print(f"\n Iniciando descarga de datos MITMA...")
-    print(f" Rango: {DATE_START} hasta {DATE_END}")
-    print(f" Destino: {RAW_DIR}")
+    print(f" Rango: {config.DATE_START} hasta {config.DATE_END}")
+    print(f" Destino: {config.RAW_DIR}")
 
     try:
         # Configuramos el objeto de movilidad
         # La versión actual del MITMA (2022-actualidad) es la versión 2.
         # Las subzonas ahora se llaman "municipalities" (municipios en la API nueva)
         mob = Mobility(
-            version=2, # Usamos la versión 2 para datos de 2024
+            version=config.VERSIONS,
             zones="municipalities",
-            start_date=DATE_START,
-            end_date=DATE_END,
-            output_directory=str(RAW_DIR)
+            start_date=config.DATE_START,
+            end_date=config.DATE_END,
+            output_directory=str(config.RAW_DIR)
         )
 
         # Ejecutamos la descarga (método actualizado para datos de origen-destino)
         mob.get_od_data(return_df=False)
         
         print("\n✅ Descarga completada con éxito.")
-        print(f"Verifica los archivos en: {RAW_DIR}")
+        print(f"Verifica los archivos en: {config.RAW_DIR}")
 
     except Exception as e:
         print(f"\nError durante la descarga: {e}")

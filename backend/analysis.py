@@ -15,6 +15,7 @@ En resumen: Es el puente entre los datos crudos y las visualizaciones bonitas de
 
 import pandas as pd
 import os
+import config
 
 # Fragmento 1: CARGA HÍBRIDA DE DATOS (Parquet vs CSV)
 # Buscamos en varias rutas por si el script se lanza desde carpetas distintas
@@ -86,7 +87,7 @@ def get_ranking(provincia: str = None, top_n: int = 8):
 # Ejemplo: [{'origen': 'Utrera', 'viajes': 500}, ...] -> Esto es oro puro para Mariana a la hora de trabajar en el Front-end porque es el lenguaje que entiende JavaScript nativamente.
 
 # Fragmento 4: Localización de los Pueblos Dormitorio
-def get_pueblos_dormitorio(provincia: str = None, umbral: float = 15.0):
+def get_pueblos_dormitorio(provincia: str = None, umbral: float = config.DORMITORIO_THRESHOLD):
     """
     Identifica municipios con alta dependencia de la capital.
     Añade etiquetas humanas para mejorar la visualización en el Front-end.

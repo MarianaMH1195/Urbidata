@@ -15,7 +15,7 @@ de España) y se queda solo con lo que nos interesa (Sevilla y Málaga).
 
 import pandas as pd
 import os
-from config import RAW_DIR, PROCESSED_DIR, PROVINCIAS_IDS, CHUNK_SIZE
+import config
 
 # Fragmento 2: El listado de archivos
 
@@ -27,10 +27,10 @@ def process_files():
     Es una forma elegante de decir: "Mira en la carpeta raw, coge todos los nombres de archivo, pero SOLO 
     si terminan en .csv.gz".
     """
-    archivos = sorted([f for f in os.listdir(RAW_DIR) if f.endswith(".csv.gz")])
+    archivos = sorted([f for f in os.listdir(config.RAW_DIR) if f.endswith(".csv.gz")])
     
     if not archivos:
-        print(  f"No se encontraron archivos para procesar en {RAW_DIR}")
+        print(  f"No se encontraron archivos para procesar en {config.RAW_DIR}")
         return
 
     total_archivos = len(archivos)
@@ -39,14 +39,14 @@ def process_files():
     lista_final = []
 
     for idx, nombre_archivo in enumerate(archivos, 1):
-        ruta_completa = os.path.join(RAW_DIR, nombre_archivo)
+        ruta_completa = os.path.join(config.RAW_DIR, nombre_archivo)
         print(f"\n[{idx}/{total_archivos}] Procesando: {nombre_archivo}...")
 
         chunks = pd.read_csv(
             ruta_completa, 
             sep="|",
             compression="gzip", 
-            chunksize=CHUNK_SIZE,
+            chunksize=config.CHUNK_SIZE,
             dtype=str
         )
 
@@ -57,8 +57,8 @@ def process_files():
 
             # Filtrar por provincia
             mask = (
-                chunk[col_origen].str[:2].isin(PROVINCIAS_IDS) | 
-                chunk[col_destino].str[:2].isin(PROVINCIAS_IDS)
+                chunk[col_origen].str[:2].isin(config.PROVINCIAS_IDS) | 
+                chunk[col_destino].str[:2].isin(config.PROVINCIAS_IDS)
             )
             
             filtrado = chunk[mask].copy()
@@ -69,13 +69,13 @@ def process_files():
             
             # Monitor de progreso más frecuente
             if i % 5 == 0 and i > 0:
-                print(f"   -> {i * CHUNK_SIZE} filas analizadas en este archivo...")
+                print(f"   -> {i * config.CHUNK_SIZE} filas analizadas en este archivo...")
 
     if lista_final:
         print("\nConcatenando y guardando resultados...")
         df_final = pd.concat(lista_final, ignore_index=True)
         
-        ruta_csv = PROCESSED_DIR / "datos_limpios_provincias.csv"
+        ruta_csv = config.PROCESSED_DIR / "datos_limpios_provincias.csv"
         df_final.to_csv(ruta_csv, index=False)
         
         ruta_parquet = ruta_csv.with_suffix(".parquet")
@@ -83,7 +83,7 @@ def process_files():
         
         print(f"\n✅ ¡PROCESO COMPLETADO!")
         print(f" Filas finales: {len(df_final)}")
-        print(f" Archivos guardados en: {PROCESSED_DIR}")
+        print(f" Archivos guardados en: {config.PROCESSED_DIR}")
     else:
         print(" No se encontraron datos que coincidan con las provincias seleccionadas.")
 
