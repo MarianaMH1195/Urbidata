@@ -1,3 +1,18 @@
+"""
+Urbidata - Módulo de Análisis (Analysis)
+Este es el cerebro de la operación. Una vez que cleaning.py ha dejado los datos bonitos y ordenados,
+analysis.py entra en acción para responder a las preguntas de Mariana.
+
+Si download.py trajo las "cajas cerradas" y cleaning.py las vació y tiró la basura, analysis.py 
+es el estadístico que se sienta con los datos limpios y nos dice:
+
+"Oye, mira, la gente de Utrera viaja más a Sevilla que la de ningún otro sitio" (Ranking).
+"Los martes hay mucho más tráfico que los domingos" (Comparativa).
+"Este pueblo es un pueblo dormitorio" (Dependencia).
+
+En resumen: Es el puente entre los datos crudos y las visualizaciones bonitas del Front-end.
+"""
+
 import pandas as pd
 import os
 
