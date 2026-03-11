@@ -89,3 +89,6 @@ print(f"Analizando provincias: {PROVINCIAS_IDS}")
 # 3. Utiliza las rutas definidas aquí para saber de qué carpeta 'processed' debe leer los datos.
 
 #Siguiente archivo download.py, que es el "extractor" (el brazo) del pipeline.
+
+WFS_URL   = "https://www.juntadeandalucia.es/institutodeestadisticaycartografia/geoserver-ieca/wfs"
+WFS_LAYER = "v_municipios_and"
