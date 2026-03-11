@@ -115,12 +115,12 @@ def run_eda():
     # ==========================================
     print("\n--- 5. ANÁLISIS UNIVARIABLE Y GRÁFICAS ---")
     
-    """5.1 Histogramas: Distribución de la variable 'viajes'
+    '''5.1 Histogramas: Distribución de la variable viajes
     Eliminamos la distribución entera. Se deja unicamente en el eda interactivo.
     Los "Outliers" (valores extremos) pueden deformar las gráficas.
-    Usamos el percentil 95 (quantile(0.95)) para quedarnos con el "95% de los 
+    Usamos el percentil 95 (quantile(0.95)) para quedarnos con el 95% de los 
     datos normales y así poder ver bien la forma de la montaña en el histograma 
-    sin que las rutas gigantescas nos aplasten la imagen."""
+    sin que las rutas gigantescas nos aplasten la imagen.'''
 
     limite = df_copy['viajes'].quantile(0.95)
     datos_normales = df_copy[df_copy['viajes'] < limite]
@@ -148,9 +148,9 @@ def run_eda():
     # ==========================================
     print("\n--- 6. ANÁLISIS BIVARIABLE ---")
     
-    """Vamos a analizar el total de viajes desde los Top 10 Orígenes, cada 
+    '''Vamos a analizar el total de viajes desde los Top 10 Orígenes, cada 
     municipio que mas viajes generan y los separa por provincia para despues hacer 
-    la gráfica. """
+    la gráfica. '''
 
     top_origenes = df_copy.groupby('origen')['viajes'].sum().sort_values(ascending=False).head(10).reset_index()
     # agrupa los orignes por viajes y ordena de mayor a menor y muestyra solamente los 10 primeros.
@@ -171,12 +171,12 @@ def run_eda():
     # ==========================================
     print("\n--- 7. ANÁLISIS DE CORRELACIÓN (HEATMAP) ---")
     
-    """
+    '''
     Solo podemos hacer matriz de correlación numérica si tenemos más columnas 
     numéricas. Como ejemplo sacamos la correlación entre las columnas numéricas. 
-    Si solo está 'viajes', la matriz será pequeña 1x1, pero la estructura está 
+    Si solo está viajes, la matriz será pequeña 1x1, pero la estructura está 
     creada para cuando haya más métricas.
-    """
+    '''
 
     cols_numericas = df_copy.select_dtypes(include=[np.number])
     if len(cols_numericas.columns) > 1:
