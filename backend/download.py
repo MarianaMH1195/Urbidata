@@ -19,9 +19,9 @@ ordenadamente con sys.exit(1).
 """
 try:
     from pyspainmobility.mobility.mobility import Mobility
-    print("✅ pySpainMobility detectado.")
+    print("[OK] pySpainMobility detectado.")
 except ImportError:
-    print("❌ Error: pySpainMobility no está instalado.")
+    print("[ERROR] pySpainMobility no está instalado.")
     print("Prueba ejecutando: pip install pySpainMobility")
     sys.exit(1)
 
@@ -40,7 +40,7 @@ def run_download():
         # La versión actual del MITMA (2022-actualidad) es la versión 2.
         # Las subzonas ahora se llaman "municipalities" (municipios en la API nueva)
         mob = Mobility(
-            version=config.VERSIONS,
+            version=config.VERSION,
             zones="municipalities",
             start_date=config.DATE_START,
             end_date=config.DATE_END,
@@ -50,7 +50,7 @@ def run_download():
         # Ejecutamos la descarga (método actualizado para datos de origen-destino)
         mob.get_od_data(return_df=False)
         
-        print("\n✅ Descarga completada con éxito.")
+        print("\n[OK] Descarga completada con éxito.")
         print(f"Verifica los archivos en: {config.RAW_DIR}")
 
     except Exception as e:

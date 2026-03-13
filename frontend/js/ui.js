@@ -21,7 +21,7 @@ const UI = {
     loadKPIs: (data) => {
         const total = data.flujos.reduce((s, f) => s + (f.viajes || f.total || 0), 0);
         UI.animateNumber('kpi-total', total);
-        UI.animateNumber('kpi-municipios', 30);
+        UI.animateNumber('kpi-municipios', data.keys.length);
         UI.animateNumber('kpi-pares', data.flujos.length);
         UI.animateNumber('kpi-dormitorio', data.dormitorio.length);
         document.getElementById('kpi-period').textContent = 'Oct 2023';

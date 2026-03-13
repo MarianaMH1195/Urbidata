@@ -33,7 +33,7 @@ async function updateAllData(prov = null) {
     UI.renderComparativa(globalData);
 }
 
-// Event Handlers
+
 window.showSection = (name) => UI.showSection(name);
 
 window.setMapMode = (mode, btn) => {

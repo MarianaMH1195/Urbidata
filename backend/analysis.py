@@ -23,130 +23,115 @@ import config
 
 # Usamos el formato .parquet porque es binario y mucho más rápido de leer que el CSV.
 # Este sistema de "búsqueda resiliente" asegura que el código no rompa si falta un formato.
-BASE_PATH = "backend/data/output"
+# Usamos el directorio procesado definido en config.py
+BASE_PATH = config.PROCESSED_DIR
+MASTER_FILE = "datos_limpios_provincias.csv"
 
-def load_data(filename: str):
+def load_data(filename: str = None):
     """
-    Carga datos de forma inteligente
-    Busca primero archivos .parquet (más rápidos) y si no, busca el .csv.
+    Carga datos de forma inteligente. Si no se especifica archivo, usa el maestro.
     """
-    # Creamos las dos versiones del nombre del archivo.
-    #.replace asegura que si buscamos 'archivo.csv', también intentemos 'archivo.parquet'
-    name_parquet = filename.replace(".csv", ".parquet")
-    name_csv = filename if filename.endswith(".csv") else f"{filename}.csv"
+    target = filename if filename else MASTER_FILE
+    name_parquet = target.replace(".csv", ".parquet")
+    name_csv = target if target.endswith(".csv") else f"{target}.csv"
 
-    # Lista de posibles rutas para buscar (resiliencia)
     paths_to_try = [
-        os.path.join(BASE_PATH, name_parquet),
-        os.path.join(BASE_PATH, name_csv),
-        os.path.join("data/output", name_parquet),
-        os.path.join("data/output", name_csv)
+        BASE_PATH / name_parquet,
+        BASE_PATH / name_csv,
     ]
 
     for path in paths_to_try:
         if os.path.exists(path):
-            # Si es parquet, usamos read_parquet. Si es csv, read_csv.
-            if path.endswith(".parquet"):
+            if str(path).endswith(".parquet"):
                 return pd.read_parquet(path)
             return pd.read_csv(path)
     
     return None
 
-
-#Fragmento 2: El "Traductor de nombres". Permite que el usuario pida "Sevilla" y el código entienda que debe filtrar por el ID '41'.
-
+# Fragmento 2: El "Traductor de nombres"
 def filter_by_provincia(df, col_name, provincia):
     if df is None or not provincia:
         return df
     
-    # Mapa de nombres a códigos (Fácil de ampliar)
     MAPPING = {'sevilla': '41', 'málaga': '29', 'malaga': '29'}
     codigo = MAPPING.get(provincia.lower())
     
     if codigo:
-        return df[df[col_name].astype(str).str.startswith(codigo)]
+        # Aseguramos que el código de origen/destino sea string para el filtro
+        df[col_name] = df[col_name].astype(str).str.zfill(5)
+        return df[df[col_name].str.startswith(codigo)]
     return df
-# maneja el error de si alguien escribe "Malaga" sin tilde.
-# IMPORTANTE: Si mañana queremos añadir 5 provincias más, solo añades líneas al diccionario MAPPING.
 
-# Fragmento 3: El Ranking de viajes por municipio
+# Fragmento 3: El Ranking de viajes por municipio (Salidas)
 def get_ranking(provincia: str = None, top_n: int = 8):
-    """Devuelve el volumen de viajes desde cada municipio hacia la capital."""
-
-    df = load_data("ranking_municipios.csv")
+    df = load_data()
     if df is not None:
         df = filter_by_provincia(df, 'origen', provincia)
-
-        # Agrupamos todas las finlas que tengan el mismo "origen" (ej. varios barrios de una ciudad) y suma sus valores de la columna "viajes".
-        # reset_index(). Al agrupar, Pandas convierte "origen" en un índice. Usar .reset_index() lo devuelve a ser una columna normal para que sea fácil trabajar con ella después.
+        # Agrupamos por origen y sumamos viajes totales
         ranking = df.groupby('origen')['viajes'].sum().reset_index()
-        ranking = ranking.sort_values(by='viajes', ascending=False).head(top_n) # ordenamos por viajes en orden descendente y cogemos los top_n primeros (por defecto 8). Como antes hemos ordenado (sort_values) de mayor a menor, nos quedamos con los más importantes.
+        ranking = ranking.sort_values(by='viajes', ascending=False).head(top_n)
         return ranking.to_dict(orient='records')
     return []
-# Resultado final: ranking.to_dict(orient='records') convierte la tabla en una Lista de Diccionarios.
-# Ejemplo: [{'origen': 'Utrera', 'viajes': 500}, ...] -> Esto es oro puro para Mariana a la hora de trabajar en el Front-end porque es el lenguaje que entiende JavaScript nativamente.
 
 # Fragmento 4: Localización de los Pueblos Dormitorio
 def get_pueblos_dormitorio(provincia: str = None, umbral: float = config.DORMITORIO_THRESHOLD):
-    """
-    Identifica municipios con alta dependencia de la capital.
-    Añade etiquetas humanas para mejorar la visualización en el Front-end.
-    """
-    df = load_data("pueblos_dormitorio.csv")
+    df = load_data()
     if df is not None:
-        df = filter_by_provincia(df, 'municipio', provincia)
+        # Calculamos totales por municipio
+        salidas = df.groupby('origen')['viajes'].sum().rename('total_salidas')
+        entradas = df.groupby('destino')['viajes'].sum().rename('total_entradas')
+        
+        # Unimos para calcular el ratio
+        dorm = pd.concat([salidas, entradas], axis=1).fillna(0).reset_index().rename(columns={'index': 'municipio'})
+        dorm = filter_by_provincia(dorm, 'municipio', provincia)
+        
+        # Filtramos capitales
+        dorm = dorm[~dorm['municipio'].astype(str).isin(config.CAPITALES_IDS)]
+        
+        # Cálculo de porcentaje de dependencia (simplificado)
+        dorm['pct_dependencia'] = (dorm['total_salidas'] / (dorm['total_salidas'] + dorm['total_entradas'] + 1) * 100).round(1)
+        
+        dormitorio = dorm[dorm['pct_dependencia'] > umbral].copy()
 
-        # Usamos .copy() para crear un nuevo DataFrame independiente
-        # y evitar el error "SettingWithCopyWarning" de Pandas.
-        dormitorio = df[df['pct_dependencia'] > umbral].copy()
-
-        # LÓGICA DE CATEGORIZACIÓN: Transformamos el número en una etiqueta clara
-        # Esto es vital para que Mariana pueda poner colores en el Front-end
         def clasificar_nivel(pct):
             if pct > 40: return "Dependencia Muy Alta"
             if pct > 25: return "Dependencia Alta"
             return "Dependencia Moderada"
 
-        # .apply() ejecuta la función 'clasificar_nivel' en cada fila automáticamente. Es como un bucle 'for' pero mucho más rápido.
-        # toma cada valor de la columna y le pasa nuestra "regla" de categorías.
         dormitorio['nivel_descripcion'] = dormitorio['pct_dependencia'].apply(clasificar_nivel)
-        
-        # Ordenamos de mayor a menor porcentaje antes de enviar
         return dormitorio.sort_values(by='pct_dependencia', ascending=False).to_dict(orient='records')
     return []
 
 
 #Fragmento 5: Comparativa Laborables vs Festivos
 def get_comparativa(provincia: str = None):
-
-    """
-    Compara viajes laborables vs festivos por origen. Es decir, compara dos columnas a la vez
-    Esto nos permite ver si un pueblo se mueve más por trabajo o por ocio.
-
-    """
-
-    df = load_data("comparativa_lab_fest.csv")
-    if df is not None:
+    df = load_data()
+    if df is not None and 'tipo_dia' in df.columns:
         df = filter_by_provincia(df, 'origen', provincia)
-        # Sumamos por origen para simplificar la vista
-        comp = df.groupby('origen')[['laborable', 'festivo']].sum().reset_index()
+        # Sumamos por origen y tipo de día, luego pivotamos
+        comp = df.groupby(['origen', 'tipo_dia'])['viajes'].sum().unstack('tipo_dia').fillna(0).reset_index()
+        # Aseguramos que existan las columnas para que el frontend no rompa
+        for col in ['laborable', 'festivo']:
+            if col not in comp.columns: comp[col] = 0
         return comp.to_dict(orient='records')
     return []
 
-#Fragmento 6: Los Flujos (Origen-Destino)
+#Fragmento 6: Los Flujos (Origen-Destino) - FORMATO ANCHO para el Mapa
 def get_flujos(provincia: str = None):
-
-    """
-    Principales flujos origen-destino.
-    En lugar de 8 resultados, aquí pedimos 40.
-    """
-
-    df = load_data("flujos_top.csv")
-    if df is not None:
+    df = load_data()
+    if df is not None and 'tipo_dia' in df.columns:
         df = filter_by_provincia(df, 'origen', provincia)
-        # Devolvemos los top flujos
-        flujos = df.sort_values(by='viajes', ascending=False).head(40)
-        return flujos.to_dict(orient='records')
+        # Agrupamos por O-D y tipo_dia
+        flujos = df.groupby(['origen', 'destino', 'tipo_dia'])['viajes'].sum().unstack('tipo_dia').fillna(0).reset_index()
+        
+        # El frontend espera 'laborable', 'festivo' y 'viajes' (el total)
+        for col in ['laborable', 'festivo']:
+            if col not in flujos.columns: flujos[col] = 0
+            
+        flujos['viajes'] = flujos['laborable'] + flujos['festivo']
+        
+        # Devolvemos los top 40 flujos más importantes
+        return flujos.sort_values(by='viajes', ascending=False).head(40).to_dict(orient='records')
     return []
 
 #Por qué peidmos 40: Los flujos origen-destino son muchos. Si solo mostramos 8, 
@@ -158,17 +143,20 @@ def analizar_cambios_ranking(provincia: str = None, top_n: int = 8):
     Usa la lógica de SETS de Python para comparar quién entra y sale 
     del ranking entre días laborables y festivos.
     """
-    # 1. Obtenemos los dos rankings (esto ya usa tu lógica previa)
-    # Imaginemos que pedimos los datos de la comparativa
-    df = load_data("comparativa_lab_fest.csv")
-    if df is None: return "No hay datos comparativos"
+    # 1. Obtenemos los datos del maestro
+    df = load_data()
+    if df is None: return "No hay datos para analizar"
     
     # Filtramos por provincia
     df = filter_by_provincia(df, 'origen', provincia)
     
+    # Agrupamos por tipo de día para comparar los rankings
+    df_lab = df[df['tipo_dia'] == 'laborable'].groupby('origen')['viajes'].sum().reset_index()
+    df_fes = df[df['tipo_dia'] == 'festivo'].groupby('origen')['viajes'].sum().reset_index()
+    
     # Sacamos los Top N nombres de municipios para ambos tipos de día
-    top_lab = set(df.sort_values(by='laborable', ascending=False).head(top_n)['origen'])
-    top_fes = set(df.sort_values(by='festivo', ascending=False).head(top_n)['origen'])
+    top_lab = set(df_lab.sort_values(by='viajes', ascending=False).head(top_n)['origen'])
+    top_fes = set(df_fes.sort_values(by='viajes', ascending=False).head(top_n)['origen'])
     
     # 2. LA MAGIA DE SETS (Diferencia de conjuntos)
     entran = top_fes - top_lab  # Estaban en festivo pero NO en laborable

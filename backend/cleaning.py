@@ -64,6 +64,13 @@ def process_files():
             filtrado = chunk[mask].copy()
 
             if not filtrado.empty:
+                # Procesamiento de fechas y tipo de día (Crítico para el Dashboard)
+                if 'fecha' in filtrado.columns:
+                    filtrado['fecha_dt'] = pd.to_datetime(filtrado['fecha'], format='%Y%m%d', errors='coerce')
+                    filtrado['tipo_dia'] = filtrado['fecha_dt'].dt.dayofweek.apply(
+                        lambda x: 'laborable' if x < 5 else 'festivo'
+                    )
+                
                 filtrado['viajes'] = pd.to_numeric(filtrado['viajes'], errors='coerce')
                 lista_final.append(filtrado)
             
@@ -81,7 +88,7 @@ def process_files():
         ruta_parquet = ruta_csv.with_suffix(".parquet")
         df_final.to_parquet(ruta_parquet, index=False)
         
-        print(f"\n✅ ¡PROCESO COMPLETADO!")
+        print(f"\n[OK] ¡PROCESO COMPLETADO!")
         print(f" Filas finales: {len(df_final)}")
         print(f" Archivos guardados en: {config.PROCESSED_DIR}")
     else:

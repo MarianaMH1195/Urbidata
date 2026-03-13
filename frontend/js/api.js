@@ -125,8 +125,8 @@ const Api = {
             const response = await fetch(url);
             if (response.ok) return await response.json();
         } catch (e) { console.warn("Error fetching comparativa, using mock", e); }
-        // For comparative, we might need to mock or return empty
-        return [];
+        // Retornar datos simulados de comparativa como respaldo
+        return DATA.comparativa.filter(d => !provincia || d.provincia.toLowerCase() === provincia.toLowerCase());
     },
 
     fetchFlujos: async (provincia = null) => {
