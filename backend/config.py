@@ -40,9 +40,8 @@ for folder in [RAW_DIR, PROCESSED_DIR, OUTPUT_DIR]:
 # PARÁMETROS MITMA (Movilidad)
 # =================================================================
 
-# Versiones de datos MITMA
-# v1: 2020-2021 | v2: 2022-actualidad
-VERSIONS = [1, 2]
+# Versión de datos MITMA (v1: 2020-2021 | v2: 2022-actualidad)
+VERSION = 2
 
 
 # Rango de fechas para el análisis (Ejemplo: Una semana de enero 2024)
@@ -66,6 +65,14 @@ PROVINCIAS_IDS = ['41', '29'] #es una lista de strings porque los códigos posta
 # 41091: Sevilla capital | 29067: Málaga capital
 CAPITALES_IDS = ['41091', '29067']
 
+# Lista de municipios con coordenadas definidas en el Frontend (para asegurar visualización)
+MUNICIPALES_DASHBOARD = [
+    "41091", "41004", "41013", "41038", "41078", "41079", "41063", "41058", "41039",
+    "41056", "41003", "41028", "41099", "41017", "41049",
+    "29067", "29069", "29065", "29014", "29030", "29095", "29084", "29043", "29051",
+    "29013", "29010", "29078", "29064", "29036", "29060"
+]
+
 
 # =================================================================
 # PARÁMETROS TÉCNICOS
@@ -78,7 +85,7 @@ CHUNK_SIZE = 100_000  #Es el número de filas que leeremos de golpe. Lo ponemos 
 # Umbral para clasificar pueblos dormitorio (% de viajes a capital)
 DORMITORIO_THRESHOLD = 15.0
 
-print("✅ Configuración cargada correctamente.")
+print("[OK] Configuracion cargada correctamente.")
 print(f"Analizando provincias: {PROVINCIAS_IDS}")
 
 
