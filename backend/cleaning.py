@@ -89,7 +89,6 @@ def process_files():
         df_final.to_parquet(ruta_parquet, index=False)
         
         print("\n✅ ¡PROCESO COMPLETADO!")
-        print(f"\n[OK] ¡PROCESO COMPLETADO!")
         print(f" Filas finales: {len(df_final)}")
         print(f" Archivos guardados en: {config.PROCESSED_DIR}")
     else:
