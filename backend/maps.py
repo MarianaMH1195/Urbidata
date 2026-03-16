@@ -156,7 +156,7 @@ def generate_maps(provincia_filtro=None):
         ).add_to(m)
 
     # 5. Guardar el mapa 
-     _guardar_mapa(m, provincia_filtro)
+    _guardar_mapa(m, provincia_filtro)
     return m
  
  
