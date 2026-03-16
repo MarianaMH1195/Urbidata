@@ -156,17 +156,17 @@ const UI = {
             const val = f.viajes || f.total || 0;
             const norm = val / max; 
 
-            // Franjas de intensidad bien diferenciadas
-            const isHigh = norm > 0.40;
-            const isMedium = norm > 0.10 && norm <= 0.40;
+            // Umbrales de intensidad refinados (Problema 3)
+            const isHigh = norm > 0.35;   // flujos dominantes (dormitorio → capital)
+            const isMedium = norm > 0.10 && norm <= 0.35; // flujos medios
             
             const color = isHigh ? '#C8502A' : isMedium ? '#C9973A' : '#7A9E7E';
 
             // Grosores tácticos: el Alto tiene mucho peso para centrar la vista
-            const weight = isHigh ? 5 : isMedium ? 2.8 : 1.6;
+            const weight = isHigh ? 5 : isMedium ? 3 : 1.5;
             
-            // Opacidades: Altos muy sólidos, Medios claros, Bajos sutiles pero visibles
-            const opacity = isHigh ? 0.95 : isMedium ? 0.75 : 0.55;
+            // Opacidades: Altos muy sólidos, Medios claros, Bajos sutiles
+            const opacity = isHigh ? 0.92 : isMedium ? 0.70 : 0.35;
 
             const curvePoints = UI._bezierPoints(c1, c2);
 
