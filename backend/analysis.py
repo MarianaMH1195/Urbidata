@@ -23,7 +23,7 @@ import config
 
 # Usamos el formato .parquet porque es binario y mucho más rápido de leer que el CSV.
 # Este sistema de "búsqueda resiliente" asegura que el código no rompa si falta un formato.
-BASE_PATH = "backend/data/output"
+
 
 def load_data(filename: str):
     """
@@ -37,8 +37,8 @@ def load_data(filename: str):
 
     # Lista de posibles rutas para buscar (resiliencia)
     paths_to_try = [
-        os.path.join(BASE_PATH, name_parquet),
-        os.path.join(BASE_PATH, name_csv),
+        str(config.OUTPUT_DIR / name_parquet),
+        str(config.OUTPUT_DIR / name_csv),
         os.path.join("data/output", name_parquet),
         os.path.join("data/output", name_csv)
     ]
@@ -51,6 +51,50 @@ def load_data(filename: str):
             return pd.read_csv(path)
     
     return None
+
+#Generación de outputs:
+#Lee el parquet y genera CSV para frontend.
+#Solo se ejecuta una vez.
+
+def build_outputs():
+    """
+    Lee datos_limpios_provincias.parquet y genera los 4 CSVs de output:
+    - ranking_municipios.csv
+    - flujos_top.csv
+    - pueblos_dormitorio.csv
+    - comparativa_lab_fest.csv
+    """
+    print("\n Generando archivos de output...")
+ 
+    # Cargamos el parquet limpio generado por cleaning.py
+    ruta_parquet = config.PROCESSED_DIR / "datos_limpios_provincias.parquet"
+    ruta_csv = config.PROCESSED_DIR / "datos_limpios_provincias.csv"
+ 
+    df = None
+    if os.path.exists(ruta_parquet):
+        print(f"   Cargando desde Parquet: {ruta_parquet}")
+        df = pd.read_parquet(ruta_parquet)
+    elif os.path.exists(ruta_csv):
+        print(f"   Cargando desde CSV: {ruta_csv}")
+        df = pd.read_csv(ruta_csv)
+    else:
+        print("❌ No se encontraron datos limpios. Ejecuta cleaning.py primero.")
+        return
+ 
+    # Identificamos las columnas de origen y destino (son dinámicas según versión MITMA)
+    col_origen = [c for c in df.columns if 'origen' in c.lower()][0]
+    col_destino = [c for c in df.columns if 'destino' in c.lower()][0]
+ 
+    # Nos aseguramos de que viajes es numérico
+    df['viajes'] = pd.to_numeric(df['viajes'], errors='coerce')
+ 
+    # Añadimos tipo_dia si no existe ya (laborable vs festivo)
+    if 'tipo_dia' not in df.columns:
+        df['fecha'] = pd.to_datetime(df['fecha'], format='%Y%m%d', errors='coerce')
+        df['tipo_dia'] = df['fecha'].dt.dayofweek.apply(
+            lambda x: 'laborable' if x < 5 else 'festivo'
+        )
+
 
 
 #Fragmento 2: El "Traductor de nombres". Permite que el usuario pida "Sevilla" y el código entienda que debe filtrar por el ID '41'.
