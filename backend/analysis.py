@@ -288,7 +288,13 @@ Es el corazón lógico que alimenta al Front-end de Urbidata.
 
 def run_analysis():
     print("Iniciando análisis lógico de datos...")
-    
+    # Primero generamos los CSVs de output si no existen
+    ranking_check = config.OUTPUT_DIR / "ranking_municipios.csv"
+    if not os.path.exists(ranking_check):
+        print("No se encontraron archivos de output. Generando...")
+        build_outputs()
+    else:
+        print("✅ Archivos de output ya existen. Saltando generación.")
     # Probando algunos datos para ver que funciona:
     ranking_sevilla = get_ranking("sevilla", 5)
     print(f"Top 5 Orígenes en Sevilla: {ranking_sevilla}")
