@@ -156,12 +156,18 @@ def generate_maps(provincia_filtro=None):
         ).add_to(m)
 
     # 5. Guardar el mapa 
+     _guardar_mapa(m, provincia_filtro)
+    return m
+ 
+ 
+def _guardar_mapa(m, provincia_filtro):
+    """Guarda el mapa HTML en data/output/mapas/"""
     mapas_dir = config.OUTPUT_DIR / "mapas"
     os.makedirs(mapas_dir, exist_ok=True)
     nombre_archivo = f"mapa_flujos_{provincia_filtro if provincia_filtro else 'total'}.html"
-    m.save(mapas_dir / nombre_archivo)
-
-    return m
+    ruta = mapas_dir / nombre_archivo
+    m.save(ruta)
+    print(f"✅ Mapa guardado en: {ruta}")
 
 if __name__ == "__main__":
     # Probamos generando el mapa total
