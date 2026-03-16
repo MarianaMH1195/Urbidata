@@ -28,6 +28,15 @@ async function updateAllData(prov = null) {
     }
     const keys = Object.keys(allMuni);
 
+    // Si hay una provincia seleccionada, filtramos flujos estrictamente (intra-provincial)
+    if (prov && prov !== '' && prov !== 'Todas las provincias') {
+        const codigoProv = prov === 'Sevilla' ? '41' : '29';
+        flujos = (flujos || []).filter(f => 
+            String(f.origen).startsWith(codigoProv) && 
+            String(f.destino).startsWith(codigoProv)
+        );
+    }
+
     globalData = { ranking, dormitorio, comparativa, flujos, allMuni, keys };
     const coords = Api.getCoords();
 
@@ -45,17 +54,27 @@ window.showSection = (name) => UI.showSection(name);
 
 window.setMapMode = (mode, btn) => {
     try {
-        if (!globalData) return;
-        window.mapMode = mode;
-        document.querySelectorAll('#map-toggles .toggle-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        UI.drawFlows(globalData, Api.getCoords(), window.mapMode);
+        const select = document.getElementById('filter-provincia');
+        if (mode === 'all') select.value = "";
+        else if (mode === 'sevilla') select.value = "Sevilla";
+        else if (mode === 'malaga') select.value = "Málaga";
+        
+        applyFilters();
     } catch (e) { console.error("Toggle Map Region Error:", e); }
 };
 
 window.applyFilters = async () => {
     try {
         const prov = document.getElementById('filter-provincia').value;
+        
+        // Sincronizar botones del mapa y estado global
+        const mapMode = !prov ? 'all' : prov.toLowerCase().replace('á', 'a');
+        window.mapMode = mapMode;
+
+        document.querySelectorAll('#map-toggles .toggle-btn').forEach(b => {
+            b.classList.toggle('active', b.getAttribute('onclick').includes(`'${mapMode}'`));
+        });
+
         await updateAllData(prov);
     } catch (e) { console.error("Apply Filters Error:", e); }
 };
