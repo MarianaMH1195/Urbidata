@@ -123,7 +123,37 @@ def generate_maps(provincia_filtro=None):
             fill_opacity=0.7,
             popup=f"Origen: {cod_origen}"
         ).add_to(m)
+ # Se dibujan encima de todo lo demás para que sean visibles
+    for cod, info in CAPITALES.items():
+        # Filtramos para mostrar solo la capital relevante si hay filtro de provincia
+        if provincia_filtro:
+            provincia_lower = provincia_filtro.lower()
+            if provincia_lower in ['sevilla'] and cod != '41091':
+                continue
+            if provincia_lower in ['málaga', 'malaga'] and cod != '29067':
+                continue
  
+        folium.CircleMarker(
+            location=info["coords"],
+            radius=14,
+            color=info["color"],
+            fill=True,
+            fill_color=info["color"],
+            fill_opacity=0.9,
+            popup=f"<b>{info['nombre']} (Capital)</b>",
+            tooltip=info["nombre"]
+        ).add_to(m)
+ 
+        # Etiqueta de texto sobre la capital
+        folium.Marker(
+            location=info["coords"],
+            icon=folium.DivIcon(
+                html=f'<div style="font-size:11px; font-weight:bold; color:{info["color"]}; '
+                     f'white-space:nowrap; margin-top:-20px;">{info["nombre"]}</div>',
+                icon_size=(80, 20),
+                icon_anchor=(40, 0)
+            )
+        ).add_to(m)
 
     # 5. Guardar el mapa 
     mapas_dir = config.OUTPUT_DIR / "mapas"
