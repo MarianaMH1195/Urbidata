@@ -87,38 +87,43 @@ def generate_maps(provincia_filtro=None):
 
     # 4. Dibujar las líneas de flujo (PolyLines)
     for flujo in flujos:
-        origen = flujo.get('origen', '').upper()
-        destino = flujo.get('destino', '').upper()
-        num_viajes = flujo.get('viajes', 0)
+        cod_origen  = str(flujo.get('origen', ''))
+        cod_destino = str(flujo.get('destino', ''))
+        num_viajes  = flujo.get('viajes', 0)
 
         # se usan las coordenadas del diccionario, opción A.
-        coord_ori = COORDENADAS_CIUDADES.get(origen)
-        coord_des = COORDENADAS_CIUDADES.get(destino)
+        coord_ori = COORDENADAS_MUNICIPIOS.get(cod_origen)
+        coord_des = COORDENADAS_MUNICIPIOS.get(cod_destino)
 
-        if coord_ori and coord_des:
-            # El grosor de la línea depende de los viajes
-            grosor = max(1, num_viajes / 500)
-            
-            # Sevilla: rojo, Málaga: azul
-            color_linea = 'crimson' if '41' in str(flujo.get('id_origen', '')) else 'royalblue'
-
-            # Dibujamos la línea
-            folium.PolyLine(
-                locations=[coord_ori, coord_des],
-                weight=grosor,
-                color=color_linea,
-                opacity=0.6,
-                popup=f"Flujo: {origen} -> {destino}<br><b>{num_viajes} viajes</b>"
-            ).add_to(m)
-            
-            #Ponemos un circulito en el origen
-            folium.CircleMarker(
-                location=coord_ori,
-                radius=3,
-                color='black',
-                fill=True,
-                fill_color='white'
-            ).add_to(m)
+        if not coord_ori or not coord_des:
+            continue  # Municipio sin coordenadas definidas, lo saltamos
+ 
+        # Color según provincia de origen (primeros 2 dígitos del código)
+        color_linea = 'crimson' if cod_origen.startswith('41') else 'royalblue'
+ 
+        # Grosor proporcional al volumen de viajes
+        grosor = max(1, num_viajes / 500)
+ 
+        # Línea de flujo
+        folium.PolyLine(
+            locations=[coord_ori, coord_des],
+            weight=grosor,
+            color=color_linea,
+            opacity=0.6,
+            popup=f"Flujo: {cod_origen} → {cod_destino}<br><b>{int(num_viajes)} viajes</b>"
+        ).add_to(m)
+ 
+        # Punto en el municipio origen
+        folium.CircleMarker(
+            location=coord_ori,
+            radius=4,
+            color=color_linea,
+            fill=True,
+            fill_color=color_linea,
+            fill_opacity=0.7,
+            popup=f"Origen: {cod_origen}"
+        ).add_to(m)
+ 
 
     # 5. Guardar el mapa 
     mapas_dir = config.OUTPUT_DIR / "mapas"
