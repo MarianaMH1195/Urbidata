@@ -9,7 +9,7 @@
     --accent3: #7A9E7E;
     --gold: #C9973A;
     --text: #4A3728;
-    --muted: #A8917C;
+    --muted: #a5825d;
 }
 
 * {
@@ -179,7 +179,7 @@ header {
     font-weight: 400;
     letter-spacing: 2px;
     text-transform: uppercase;
-    color: #C4A98A;
+    color: #a5825d;
 }
 
 nav {
@@ -190,7 +190,7 @@ nav {
 .nav-btn {
     background: none;
     border: none;
-    color: #B09880;
+    color: #a5825d;
     font-family: 'DM Sans', sans-serif;
     font-size: 14px;
     font-weight: 400;
@@ -275,7 +275,7 @@ h1 .line2 {
     font-size: 16px;
     font-weight: 300;
     line-height: 1.75;
-    color: #B09880;
+    color: #a5825d;
     max-width: 480px;
 }
 
@@ -377,7 +377,7 @@ h1 .line2 {
     font-weight: 400;
     text-transform: uppercase;
     letter-spacing: 1px;
-    color: #C4A98A;
+    color: #a5825d;
 }
 
 .kpi-trend {
@@ -439,7 +439,7 @@ h1 .line2 {
     font-weight: 400;
     text-transform: uppercase;
     letter-spacing: 1px;
-    color: #C4A98A;
+    color: #a5825d;
 }
 
 .filter-select {
@@ -549,7 +549,7 @@ h1 .line2 {
 .toggle-btn {
     background: none;
     border: none;
-    color: #A8917C;
+    color: #a5825d;
     font-size: 13px;
     padding: 6px 14px;
     border-radius: 8px;
@@ -575,7 +575,7 @@ h1 .line2 {
     font-weight: 400;
     text-transform: uppercase;
     letter-spacing: 1px;
-    color: #C4A98A;
+    color: #a5825d;
     padding: 0 12px 12px 0;
     text-align: left;
 }
@@ -599,7 +599,7 @@ h1 .line2 {
     font-family: 'Syne', sans-serif;
     font-weight: 600;
     font-size: 15px;
-    color: #C4A98A;
+    color: #a5825d;
 }
 
 .rank-bar {
@@ -644,7 +644,7 @@ h1 .line2 {
 .dorm-label {
     font-size: 11px;
     font-weight: 400;
-    color: #C4A98A;
+    color: #a5825d;
 }
 
 #map {
@@ -694,7 +694,7 @@ h1 .line2 {
     font-size: 11px;
     text-transform: uppercase;
     letter-spacing: 0.8px;
-    color: #C4A98A;
+    color: #a5825d;
     margin-bottom: 10px;
     font-weight: 600;
 }
@@ -714,7 +714,7 @@ h1 .line2 {
 
 .legend-text {
     font-size: 12px;
-    color: #A8917C;
+    color: #a5825d;
     font-weight: 400;
 }
 
@@ -792,13 +792,13 @@ footer {
 
 .footer-left {
     font-size: 13px;
-    color: #C4A98A;
+    color: #a5825d;
     font-weight: 300;
 }
 
 .footer-link {
     font-size: 13px;
-    color: #C4A98A;
+    color: #a5825d;
     font-weight: 300;
     text-decoration: none;
     transition: color 0.2s;

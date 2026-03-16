@@ -99,43 +99,49 @@ const UI = {
         } else if (mode === 'malaga') {
             filtered = filtered.filter(f => String(f.origen).startsWith('29') || String(f.destino).startsWith('29'));
         }
-
-        let top = filtered.slice(0, 30);
+        let top = filtered.slice(0, 40); // Mostrar 40 flujos para llenar el mapa
         const max = (top[0]?.viajes || top[0]?.total || 1);
         const muniMap = data.allMuni || {};
 
         top.forEach(f => {
             const c1 = coords[f.origen], c2 = coords[f.destino]; if (!c1 || !c2) return;
             const val = f.viajes || f.total || 0;
-            const norm = val / max;
+            const norm = val / max; // Normalizamos respecto al máximo flujo (0.0 a 1.0)
 
-            // Usamos una escala progresiva (raíz cuadrada) para que los flujos bajos tengan más presencia
-            const pNorm = Math.sqrt(norm);
+            // Colores: Rojo/Naranja (#C8502A) para Alto, Dorado (#C9973A) para Medio, Verde (#7A9E7E) para Bajo
+            const isHigh = norm > 0.4;
+            const isMedium = norm > 0.15 && norm <= 0.4;
+            
+            const color = isHigh ? '#C8502A' : isMedium ? '#C9973A' : '#7A9E7E';
 
-            // Colores solicitados
-            const color = norm > 0.5 ? '#C8502A' : norm > 0.2 ? '#C9973A' : '#7A9E7E';
+            // Grosor: Flujos altos son gruesos y evidentes, flujos bajos son más tenues
+            const weight = isHigh ? 3.5 : isMedium ? 2.2 : 1.2;
+            
+            // Opacidad: Mayor opacidad para los importantes
+            const opacity = isHigh ? 0.85 : isMedium ? 0.65 : 0.4;
 
-            // Grosor ajustado: mínimo 1.2px para visibilidad, máximo 2.8px (un poco más que 2.5 pero proporcional)
-            const weight = 1.0 + pNorm * 1.8;
+            // Capa 1 — halo suave (detrás) para dar efecto de brillo a los flujos más altos
+            if (isHigh || isMedium) {
+                const halo = L.polyline([c1, c2], {
+                    weight: weight + 4,
+                    color: color,
+                    opacity: opacity * 0.3,
+                    smoothFactor: 1,
+                    lineCap: 'round',
+                    interactive: false
+                });
+                flowLayers.push(halo);
+                halo.addTo(map);
+            }
 
-            // Capa 1 — halo suave (detrás) - Reforzado para contraste
-            const halo = L.polyline([c1, c2], {
-                weight: weight + 3.5,
-                color: color,
-                opacity: 0.15 + pNorm * 0.12,
-                smoothFactor: 2,
-                lineCap: 'round',
-                interactive: false
-            });
-
-            // Capa 2 — línea principal (encima) - Opacidad base aumentada
+            // Capa 2 — línea principal (encima)
             const line = L.polyline([c1, c2], {
                 weight: weight,
                 color: color,
-                opacity: 0.55 + pNorm * 0.35,
-                smoothFactor: 2,
+                opacity: opacity,
+                smoothFactor: 1,
                 lineCap: 'round',
-                dashArray: norm < 0.12 ? '5, 10' : undefined
+                dashArray: (!isHigh && !isMedium) ? '4, 8' : undefined // Sólo los flujos menores son punteados
             });
 
             const n1 = muniMap[f.origen] || f.origen, n2 = muniMap[f.destino] || f.destino;
@@ -145,7 +151,7 @@ const UI = {
             const tooltipContent = `
                 <div style="padding:4px">
                     <strong style="color:#5C3D28;display:block;margin-bottom:4px">${n1} → ${n2}</strong>
-                    <span style="color:#A8917C;font-size:12px">
+                    <span style="color:#a5825d;font-size:12px">
                       Laborable: <strong style="color:#C8502A">${t_lab}</strong>
                       &nbsp;·&nbsp;
                       Festivo: <strong style="color:#C9973A">${t_fes}</strong>
@@ -154,9 +160,8 @@ const UI = {
 
             line.bindTooltip(tooltipContent, { sticky: true, className: 'tooltip-custom' });
 
-            halo.addTo(map);
             line.addTo(map);
-            flowLayers.push(halo, line);
+            flowLayers.push(line);
         });
     },
 
@@ -234,7 +239,7 @@ const UI = {
             legend: {
                 display: legend,
                 labels: {
-                    color: '#C4A98A',
+                    color: '#a5825d',
                     font: { family: 'DM Sans', size: 11 },
                     boxWidth: 12
                 }
@@ -242,7 +247,7 @@ const UI = {
             tooltip: {
                 backgroundColor: '#FDFAF6',
                 titleColor: '#5C3D28',
-                bodyColor: '#A8917C',
+                bodyColor: '#a5825d',
                 borderColor: 'rgba(60,35,10,0.09)',
                 borderWidth: 1,
                 padding: 10,
@@ -255,7 +260,7 @@ const UI = {
             x: {
                 grid: { color: 'rgba(60,35,10,0.04)', drawBorder: false },
                 ticks: {
-                    color: '#C4A98A',
+                    color: '#a5825d',
                     font: { family: 'DM Sans', size: 11 },
                     maxRotation: 35
                 }
@@ -263,7 +268,7 @@ const UI = {
             y: {
                 grid: { color: 'rgba(60,35,10,0.05)', drawBorder: false },
                 ticks: {
-                    color: '#C4A98A',
+                    color: '#a5825d',
                     font: { family: 'DM Sans', size: 11 },
                     callback: v => v >= 1000 ? (v / 1000).toFixed(0) + 'k' : v
                 }

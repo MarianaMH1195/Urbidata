@@ -50,7 +50,7 @@ def load_data(filename: str = None):
         str(config.OUTPUT_DIR / name_parquet),
         str(config.OUTPUT_DIR / name_csv),
         os.path.join("data/output", name_parquet),
-        os.path.join("data/output", name_csv)
+        os.path.join("data/output", name_csv),
         BASE_PATH / name_parquet,
         BASE_PATH / name_csv,
     ]
@@ -226,13 +226,15 @@ def get_comparativa(provincia: str = None):
     df = load_data()
     if df is not None and 'tipo_dia' in df.columns:
         df = filter_by_provincia(df, 'origen', provincia)
-         # Nos aseguramos de que las columnas existen antes de agrupar
+         # Lógica de la compañera: Nos aseguramos de que las columnas existen antes de agrupar
         cols_disponibles = [c for c in ['laborable', 'festivo'] if c in df.columns]
-        if not cols_disponibles:
-            return []
-        comp = df.groupby('origen')[cols_disponibles].sum().reset_index()
-        # Sumamos por origen y tipo de día, luego pivotamos
-        comp = df.groupby(['origen', 'tipo_dia'])['viajes'].sum().unstack('tipo_dia').fillna(0).reset_index()
+        if cols_disponibles:
+            # Si las columnas ya existen (e.g., porque se cargó un csv pre-procesado)
+            comp = df.groupby('origen')[cols_disponibles].sum().reset_index()
+        else:
+            # Si no existen, es el archivo maestro y tenemos que pivotar 'tipo_dia'
+            comp = df.groupby(['origen', 'tipo_dia'])['viajes'].sum().unstack('tipo_dia').fillna(0).reset_index()
+        
         # Aseguramos que existan las columnas para que el frontend no rompa
         for col in ['laborable', 'festivo']:
             if col not in comp.columns: comp[col] = 0
