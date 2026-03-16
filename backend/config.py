@@ -65,6 +65,14 @@ PROVINCIAS_IDS = ['41', '29'] #es una lista de strings porque los códigos posta
 # 41091: Sevilla capital | 29067: Málaga capital
 CAPITALES_IDS = ['41091', '29067']
 
+# Lista de municipios con coordenadas definidas en el Frontend (para asegurar visualización)
+MUNICIPALES_DASHBOARD = [
+    "41091", "41004", "41013", "41038", "41078", "41079", "41063", "41058", "41039",
+    "41056", "41003", "41028", "41099", "41017", "41049",
+    "29067", "29069", "29065", "29014", "29030", "29095", "29084", "29043", "29051",
+    "29013", "29010", "29078", "29064", "29036", "29060"
+]
+
 
 # =================================================================
 # PARÁMETROS TÉCNICOS

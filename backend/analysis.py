@@ -27,10 +27,20 @@ import config
 BASE_PATH = config.PROCESSED_DIR
 MASTER_FILE = "datos_limpios_provincias.csv"
 
+# Caché global para evitar lecturas constantes de disco
+_cached_df = None
+
 def load_data(filename: str = None):
     """
     Carga datos de forma inteligente. Si no se especifica archivo, usa el maestro.
+    Usa caché para mejorar el rendimiento de la API.
     """
+    global _cached_df
+    
+    # Si pedimos el archivo maestro y ya lo tenemos en caché, lo devolvemos
+    if not filename and _cached_df is not None:
+        return _cached_df
+
     target = filename if filename else MASTER_FILE
     name_parquet = target.replace(".csv", ".parquet")
     name_csv = target if target.endswith(".csv") else f"{target}.csv"
@@ -43,8 +53,14 @@ def load_data(filename: str = None):
     for path in paths_to_try:
         if os.path.exists(path):
             if str(path).endswith(".parquet"):
-                return pd.read_parquet(path)
-            return pd.read_csv(path)
+                df = pd.read_parquet(path)
+            else:
+                df = pd.read_csv(path)
+            
+            # Guardamos en caché si es el archivo maestro
+            if not filename:
+                _cached_df = df
+            return df
     
     return None
 
@@ -121,6 +137,15 @@ def get_flujos(provincia: str = None):
     df = load_data()
     if df is not None and 'tipo_dia' in df.columns:
         df = filter_by_provincia(df, 'origen', provincia)
+        
+        # Filtramos flujos intra-municipales (Origen != Destino) para el mapa
+        df = df[df['origen'] != df['destino']]
+        
+        # Filtramos para que solo devuelva municipios que el frontend puede dibujar
+        if hasattr(config, 'MUNICIPALES_DASHBOARD'):
+            df = df[df['origen'].isin(config.MUNICIPALES_DASHBOARD) & 
+                    df['destino'].isin(config.MUNICIPALES_DASHBOARD)]
+        
         # Agrupamos por O-D y tipo_dia
         flujos = df.groupby(['origen', 'destino', 'tipo_dia'])['viajes'].sum().unstack('tipo_dia').fillna(0).reset_index()
         
