@@ -261,8 +261,8 @@ def get_flujos(provincia: str = None):
             
         flujos['viajes'] = flujos['laborable'] + flujos['festivo']
         
-        # Devolvemos los top 40 flujos más importantes
-        return flujos.sort_values(by='viajes', ascending=False).head(40).to_dict(orient='records')
+        # Devolvemos los top 100 flujos más importantes
+        return flujos.sort_values(by='viajes', ascending=False).head(100).to_dict(orient='records')
     return []
 
 #Por qué peidmos 40: Los flujos origen-destino son muchos. Si solo mostramos 8, 

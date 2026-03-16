@@ -147,26 +147,26 @@ const UI = {
             ACTIVE_CAPS.includes(String(f.origen)) || ACTIVE_CAPS.includes(String(f.destino))
         );
 
-        let top = filtered.slice(0, 40); // Mostrar 40 flujos para llenar el mapa
+        let top = filtered.slice(0, 100); // Mostrar hasta 100 flujos para llenar el mapa
         const max = (top[0]?.viajes || top[0]?.total || 1);
         const muniMap = data.allMuni || {};
 
         top.forEach(f => {
             const c1 = coords[f.origen], c2 = coords[f.destino]; if (!c1 || !c2) return;
             const val = f.viajes || f.total || 0;
-            const norm = val / max; // Normalizamos respecto al máximo flujo (0.0 a 1.0)
+            const norm = val / max; 
 
-            // Colores: Rojo/Naranja (#C8502A) para Alto, Dorado (#C9973A) para Medio, Verde (#7A9E7E) para Bajo
-            const isHigh = norm > 0.4;
-            const isMedium = norm > 0.15 && norm <= 0.4;
+            // Definición clara de categorías: Alto (>50%), Medio (15-50%), Bajo (<15%)
+            const isHigh = norm > 0.50;
+            const isMedium = norm > 0.15 && norm <= 0.50;
             
             const color = isHigh ? '#C8502A' : isMedium ? '#C9973A' : '#7A9E7E';
 
-            // Grosor: Flujos altos son gruesos y evidentes, flujos bajos son más tenues
-            const weight = isHigh ? 3.5 : isMedium ? 2.2 : 1.2;
+            // Grosores más diferenciados
+            const weight = isHigh ? 5 : isMedium ? 2.5 : 1.2;
             
-            // Opacidad: Mayor opacidad para los importantes
-            const opacity = isHigh ? 0.85 : isMedium ? 0.65 : 0.4;
+            // Opacidades para evitar saturación
+            const opacity = isHigh ? 0.9 : isMedium ? 0.6 : 0.3;
 
             const curvePoints = UI._bezierPoints(c1, c2);
 
