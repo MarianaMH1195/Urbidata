@@ -222,8 +222,11 @@ def get_comparativa(provincia: str = None):
     df = load_data("comparativa_lab_fest.csv")
     if df is not None:
         df = filter_by_provincia(df, 'origen', provincia)
-        # Sumamos por origen para simplificar la vista
-        comp = df.groupby('origen')[['laborable', 'festivo']].sum().reset_index()
+         # Nos aseguramos de que las columnas existen antes de agrupar
+        cols_disponibles = [c for c in ['laborable', 'festivo'] if c in df.columns]
+        if not cols_disponibles:
+            return []
+        comp = df.groupby('origen')[cols_disponibles].sum().reset_index()
         return comp.to_dict(orient='records')
     return []
 
