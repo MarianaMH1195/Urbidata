@@ -50,7 +50,7 @@ def load_data(filename: str = None):
         str(config.OUTPUT_DIR / name_parquet),
         str(config.OUTPUT_DIR / name_csv),
         os.path.join("data/output", name_parquet),
-        os.path.join("data/output", name_csv)
+        os.path.join("data/output", name_csv),
         BASE_PATH / name_parquet,
         BASE_PATH / name_csv,
     ]
@@ -166,7 +166,6 @@ def build_outputs():
 
 #Fragmento 2: El "Traductor de nombres". Permite que el usuario pida "Sevilla" y el código entienda que debe filtrar por el ID '41'.
 
-# Fragmento 2: El "Traductor de nombres"
 def filter_by_provincia(df, col_name, provincia):
     if df is None or not provincia:
         return df
@@ -176,7 +175,6 @@ def filter_by_provincia(df, col_name, provincia):
     
     if codigo:
         # Aseguramos que el código de origen/destino sea string para el filtro
-        df[col_name] = df[col_name].astype(str).str.zfill(5)
         return df[df[col_name].str.startswith(codigo)]
     return df
 
@@ -226,11 +224,8 @@ def get_comparativa(provincia: str = None):
     df = load_data()
     if df is not None and 'tipo_dia' in df.columns:
         df = filter_by_provincia(df, 'origen', provincia)
-         # Nos aseguramos de que las columnas existen antes de agrupar
+        # Nos aseguramos de que las columnas existen antes de agrupar
         cols_disponibles = [c for c in ['laborable', 'festivo'] if c in df.columns]
-        if not cols_disponibles:
-            return []
-        comp = df.groupby('origen')[cols_disponibles].sum().reset_index()
         # Sumamos por origen y tipo de día, luego pivotamos
         comp = df.groupby(['origen', 'tipo_dia'])['viajes'].sum().unstack('tipo_dia').fillna(0).reset_index()
         # Aseguramos que existan las columnas para que el frontend no rompa
