@@ -141,13 +141,13 @@ const UI = {
             filtered = filtered.filter(f => String(f.origen).startsWith('29') || String(f.destino).startsWith('29'));
         }
 
-        // Mostrar solo flujos que conecten con las capitales presentes en los datos activos
+        // Mostrar solo flujos que conecten con las capitales (Radial: Capital <-> Pueblos)
         const ACTIVE_CAPS = ['41091', '29067'].filter(id => data.allMuni[id]);
         filtered = filtered.filter(f =>
             ACTIVE_CAPS.includes(String(f.origen)) || ACTIVE_CAPS.includes(String(f.destino))
         );
 
-        let top = filtered.slice(0, 100); // Mostrar hasta 100 flujos para llenar el mapa
+        let top = filtered.slice(0, 100); 
         const max = (top[0]?.viajes || top[0]?.total || 1);
         const muniMap = data.allMuni || {};
 
@@ -156,17 +156,17 @@ const UI = {
             const val = f.viajes || f.total || 0;
             const norm = val / max; 
 
-            // Definición clara de categorías: Alto (>50%), Medio (15-50%), Bajo (<15%)
-            const isHigh = norm > 0.50;
-            const isMedium = norm > 0.15 && norm <= 0.50;
+            // Franjas de intensidad bien diferenciadas
+            const isHigh = norm > 0.40;
+            const isMedium = norm > 0.10 && norm <= 0.40;
             
             const color = isHigh ? '#C8502A' : isMedium ? '#C9973A' : '#7A9E7E';
 
-            // Grosores más diferenciados
-            const weight = isHigh ? 5 : isMedium ? 2.5 : 1.2;
+            // Grosores tácticos: el Alto tiene mucho peso para centrar la vista
+            const weight = isHigh ? 5 : isMedium ? 2.8 : 1.6;
             
-            // Opacidades para evitar saturación
-            const opacity = isHigh ? 0.9 : isMedium ? 0.6 : 0.3;
+            // Opacidades: Altos muy sólidos, Medios claros, Bajos sutiles pero visibles
+            const opacity = isHigh ? 0.95 : isMedium ? 0.75 : 0.55;
 
             const curvePoints = UI._bezierPoints(c1, c2);
 
@@ -189,9 +189,9 @@ const UI = {
                 weight: weight,
                 color: color,
                 opacity: opacity,
-                smoothFactor: 1,
-                lineCap: 'round',
-                dashArray: (!isHigh && !isMedium) ? '4, 8' : undefined // Sólo los flujos menores son punteados
+                smoothFactor: 2,
+                lineCap: 'round'
+                // Ya no usamos dashArray para que todas las líneas sean claramente visibles
             });
 
             const n1 = muniMap[f.origen] || f.origen, n2 = muniMap[f.destino] || f.destino;

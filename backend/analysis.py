@@ -248,9 +248,10 @@ def get_flujos(provincia: str = None):
         df = df[df['origen'] != df['destino']]
         
         # Filtramos para que solo devuelva municipios que el frontend puede dibujar
-        if hasattr(config, 'MUNICIPALES_DASHBOARD'):
-            df = df[df['origen'].astype(str).isin(config.MUNICIPALES_DASHBOARD) & 
-                    df['destino'].astype(str).isin(config.MUNICIPALES_DASHBOARD)]
+        # (Desactivamos temporalmente para permitir que se vean todos los flujos si el frontend tiene las coordenadas)
+        # if hasattr(config, 'MUNICIPALES_DASHBOARD'):
+        #     df = df[df['origen'].astype(str).isin(config.MUNICIPALES_DASHBOARD) & 
+        #             df['destino'].astype(str).isin(config.MUNICIPALES_DASHBOARD)]
         
         # Agrupamos por O-D y tipo_dia
         flujos = df.groupby(['origen', 'destino', 'tipo_dia'])['viajes'].sum().unstack('tipo_dia').fillna(0).reset_index()
