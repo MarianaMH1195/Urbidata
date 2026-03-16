@@ -9,22 +9,37 @@ import analysis #sacar los flujos
 
 # 1. Coordenadas de ciudades
 # se puede cambiar a CSV externo (opción B)
-COORDENADAS_CIUDADES = {
-    "SEVILLA": [37.3891, -5.9845],
-    "MÁLAGA": [36.7212, -4.4214],
-    "DOS HERMANAS": [37.2829, -5.9209],
-    "ALCALÁ DE GUADAÍRA": [37.3333, -5.8500],
-    "UTRERA": [37.1833, -5.7833],
-    "MAIRENA DEL ALJARAFE": [37.3431, -6.0461],
-    "MARBELLA": [36.5167, -4.8833],
-    "FUENGIROLA": [36.5417, -4.6250],
-    "VÉLEZ-MÁLAGA": [36.7833, -4.1000],
-    "ANTEQUERA": [37.0192, -4.5611],
-    "TORREMOLINOS": [36.6231, -4.5008],
-    "RINCONADA, LA": [37.4872, -5.9822],
-    "ÉCIJA": [37.5411, -5.0789],
-    "ESTEPONA": [36.4278, -5.1444],
-    "MIJAS": [36.5956, -4.6375]
+COORDENADAS_MUNICIPIOS = {
+    # ── Sevilla capital y municipios principales ──────────────
+    "41091": [37.3891, -5.9845],   # Sevilla capital
+    "41038": [37.2829, -5.9209],   # Dos Hermanas
+    "41004": [37.3333, -5.8500],   # Alcalá de Guadaíra
+    "41091": [37.3891, -5.9845],   # Sevilla capital (repetido por seguridad)
+    "41060": [37.1833, -5.7833],   # Utrera
+    "41051": [37.3431, -6.0461],   # Mairena del Aljarafe
+    "41078": [37.4872, -5.9822],   # La Rinconada
+    "41033": [37.5411, -5.0789],   # Écija
+    "41028": [37.3167, -5.7000],   # Carmona
+    "41013": [37.5228, -6.0019],   # Brenes
+    "41048": [37.3358, -6.1439],   # Mairena del Alcor (aprox)
+    "41071": [37.6058, -5.9128],   # Lora del Río
+    "41055": [37.2731, -5.6086],   # Morón de la Frontera
+    "41095": [37.3939, -6.0436],   # Tomares
+    "41044": [37.3778, -6.0514],   # Gelves
+    # ── Málaga capital y municipios principales ───────────────
+    "29067": [36.7212, -4.4214],   # Málaga capital
+    "29069": [36.5167, -4.8833],   # Marbella
+    "29051": [36.5417, -4.6250],   # Fuengirola
+    "29904": [36.7833, -4.1000],   # Vélez-Málaga
+    "29014": [37.0192, -4.5611],   # Antequera
+    "29091": [36.6231, -4.5008],   # Torremolinos
+    "29099": [36.4278, -5.1444],   # Estepona
+    "29070": [36.5956, -4.6375],   # Mijas
+    "29054": [36.7167, -4.5500],   # Málaga (Churriana, aprox)
+    "29042": [36.6417, -4.5103],   # Benalmádena
+    "29026": [36.5072, -4.7581],   # Benahavís
+    "29080": [36.7800, -4.6500],   # Cártama
+    "29050": [36.6000, -4.6333],   # Fuengirola (alt)
 }
 
 
