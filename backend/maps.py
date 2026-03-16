@@ -41,7 +41,11 @@ COORDENADAS_MUNICIPIOS = {
     "29080": [36.7800, -4.6500],   # Cártama
     "29050": [36.6000, -4.6333],   # Fuengirola (alt)
 }
-
+# Capitales con sus coordenadas para los marcadores hub
+CAPITALES = {
+    "41091": {"nombre": "Sevilla", "coords": [37.3891, -5.9845], "color": "crimson"},
+    "29067": {"nombre": "Málaga", "coords": [36.7212, -4.4214],  "color": "royalblue"},
+}
 
 ''' OPCIÓN B: CARGAR COORDENADAS DESDE UN CSV (Sustituye al diccionario de arriba)
 
