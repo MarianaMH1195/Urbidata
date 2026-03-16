@@ -94,7 +94,57 @@ def build_outputs():
         df['tipo_dia'] = df['fecha'].dt.dayofweek.apply(
             lambda x: 'laborable' if x < 5 else 'festivo'
         )
-
+    # ── 1. Flujos top origen-destino ──────────────────────────
+    flujos = (
+        df.groupby([col_origen, col_destino, 'tipo_dia'])['viajes']
+        .sum().reset_index()
+        .rename(columns={col_origen: 'origen', col_destino: 'destino'})
+        .sort_values('viajes', ascending=False)
+    )
+    flujos.to_csv(config.OUTPUT_DIR / "flujos_top.csv", index=False)
+    print(f"   ✅ flujos_top.csv → {flujos.shape[0]} filas")
+ 
+    # ── 2. Ranking municipios hacia la capital ─────────────────
+    ranking = (
+        df[df[col_destino].isin(config.CAPITALES_IDS)]
+        .groupby([col_origen, col_destino, 'tipo_dia'])['viajes']
+        .sum().reset_index()
+        .rename(columns={col_origen: 'origen', col_destino: 'destino'})
+        .sort_values('viajes', ascending=False)
+    )
+    ranking.to_csv(config.OUTPUT_DIR / "ranking_municipios.csv", index=False)
+    print(f"   ✅ ranking_municipios.csv → {ranking.shape[0]} filas")
+ 
+    # ── 3. Pueblos dormitorio ──────────────────────────────────
+    total_por_municipio = df.groupby(col_origen)['viajes'].sum()
+    viajes_a_capital = (
+        df[df[col_destino].isin(config.CAPITALES_IDS)]
+        .groupby(col_origen)['viajes'].sum()
+    )
+    dormitorio = (viajes_a_capital / total_por_municipio * 100).dropna().reset_index()
+    dormitorio.columns = ['municipio', 'pct_dependencia']
+    dormitorio = dormitorio.sort_values('pct_dependencia', ascending=False)
+    dormitorio.to_csv(config.OUTPUT_DIR / "pueblos_dormitorio.csv", index=False)
+    print(f"   ✅ pueblos_dormitorio.csv → {dormitorio.shape[0]} filas")
+ 
+    # ── 4. Comparativa laborable vs festivo ───────────────────
+    # Usamos pivot_table para crear columnas 'laborable' y 'festivo'
+    comparativa = (
+        df.groupby([col_origen, 'tipo_dia'])['viajes']
+        .sum()
+        .unstack('tipo_dia')
+        .reset_index()
+        .rename(columns={col_origen: 'origen'})
+    )
+    comparativa.columns.name = None
+    # Nos aseguramos de que existen ambas columnas aunque no haya datos de un tipo
+    for col in ['laborable', 'festivo']:
+        if col not in comparativa.columns:
+            comparativa[col] = 0
+    comparativa.to_csv(config.OUTPUT_DIR / "comparativa_lab_fest.csv", index=False)
+    print(f"   ✅ comparativa_lab_fest.csv → {comparativa.shape[0]} filas")
+ 
+    print("\n✅ Todos los archivos de output generados correctamente.")
 
 
 #Fragmento 2: El "Traductor de nombres". Permite que el usuario pida "Sevilla" y el código entienda que debe filtrar por el ID '41'.
