@@ -81,7 +81,7 @@ def process_files():
         ruta_parquet = ruta_csv.with_suffix(".parquet")
         df_final.to_parquet(ruta_parquet, index=False)
         
-        print(f"\n✅ ¡PROCESO COMPLETADO!")
+        print("\n✅ ¡PROCESO COMPLETADO!")
         print(f" Filas finales: {len(df_final)}")
         print(f" Archivos guardados en: {config.PROCESSED_DIR}")
     else:
