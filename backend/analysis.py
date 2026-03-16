@@ -174,8 +174,8 @@ def filter_by_provincia(df, col_name, provincia):
     codigo = MAPPING.get(provincia.lower())
     
     if codigo:
-        # Aseguramos que el código de origen/destino sea string para el filtro
-        return df[df[col_name].str.startswith(codigo)]
+        # Aseguramos que el código de origen/destino sea string para el filtro .str.startswith
+        return df[df[col_name].astype(str).str.startswith(codigo)]
     return df
 
 # Fragmento 3: El Ranking de viajes por municipio (Salidas)
@@ -249,8 +249,8 @@ def get_flujos(provincia: str = None):
         
         # Filtramos para que solo devuelva municipios que el frontend puede dibujar
         if hasattr(config, 'MUNICIPALES_DASHBOARD'):
-            df = df[df['origen'].isin(config.MUNICIPALES_DASHBOARD) & 
-                    df['destino'].isin(config.MUNICIPALES_DASHBOARD)]
+            df = df[df['origen'].astype(str).isin(config.MUNICIPALES_DASHBOARD) & 
+                    df['destino'].astype(str).isin(config.MUNICIPALES_DASHBOARD)]
         
         # Agrupamos por O-D y tipo_dia
         flujos = df.groupby(['origen', 'destino', 'tipo_dia'])['viajes'].sum().unstack('tipo_dia').fillna(0).reset_index()

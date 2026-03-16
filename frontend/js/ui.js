@@ -1,6 +1,6 @@
 // ==================== UI MODULE ====================
 let chartFlujos, chartDorm, chartComp;
-let map, flowLayers = [];
+let map, flowLayers = [], markerLayers = [];
 
 const UI = {
     animateNumber: (id, target) => {
@@ -31,23 +31,26 @@ const UI = {
         try {
             const container = document.getElementById('map');
             if (!container) return;
-            if (map) { UI.drawFlows(data, coords, window.mapMode || 'all'); return; }
+            if (map) { 
+                UI.drawMarkers(data, coords);
+                UI.drawFlows(data, coords, window.mapMode || 'all'); 
+                return; 
+            }
 
             map = L.map('map', { zoomControl: true, attributionControl: false }).setView([37.15, -4.85], 7.5);
 
             // Capas Base
+            const voyager = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', { maxZoom: 19, subdomains: 'abcd' });
             const sat = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19 });
-            const topo = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', { maxZoom: 19 });
-            const terr = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Physical_Map/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19 });
+            const dark = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { maxZoom: 19, subdomains: 'abcd' });
 
             // Overlays
             const labels = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19, opacity: 0.8 });
 
-            const baseMaps = { "Satélite": sat, "Topográfico": topo, "Terreno": terr };
+            const baseMaps = { "🗺️ Topográfico": voyager, "🛰️ Satélite": sat, "🌑 Oscuro": dark };
             const overlays = { "Etiquetas": labels };
 
-            sat.addTo(map);
-            labels.addTo(map);
+            voyager.addTo(map);
 
             // Control de capas (estilo nativo Leaflet posicionado arriba a la derecha)
             L.control.layers(baseMaps, overlays, { collapsed: false, position: 'topright' }).addTo(map);
@@ -75,17 +78,55 @@ const UI = {
             };
             legend.addTo(map);
 
-            const muniMap = data.allMuni || {};
-            Object.keys(muniMap).forEach(k => {
-                const c = coords[k]; if (!c) return;
-                const isCap = String(k) === "41091" || String(k) === "29067";
-                const color = String(k).startsWith("41") ? '#FF6DAA' : '#00E5C8';
-                const radius = isCap ? 8 : 4;
-                L.circleMarker(c, { radius, color, fillColor: color, fillOpacity: 0.7, weight: isCap ? 2 : 1 }).addTo(map)
-                    .bindTooltip(`<strong>${muniMap[k]}</strong>`, { className: 'tooltip-custom' });
-            });
+            UI.drawMarkers(data, coords);
             UI.drawFlows(data, coords, window.mapMode || 'all');
         } catch (e) { console.error("Map Init Error:", e); }
+    },
+
+    drawMarkers: (data, coords) => {
+        if (!map) return;
+        markerLayers.forEach(l => map.removeLayer(l));
+        markerLayers = [];
+
+        const muniMap = data.allMuni || {};
+        Object.keys(muniMap).forEach(k => {
+            const c = coords[k]; if (!c) return;
+            const isCap = String(k) === "41091" || String(k) === "29067";
+            const color = String(k).startsWith("41") ? '#FF6DAA' : '#00E5C8';
+            const radius = isCap ? 8 : 4;
+            const marker = L.circleMarker(c, { radius, color, fillColor: color, fillOpacity: 0.7, weight: isCap ? 2 : 1 });
+            marker.bindTooltip(`<strong>${muniMap[k]}</strong>`, { className: 'tooltip-custom' });
+            marker.addTo(map);
+            markerLayers.push(marker);
+        });
+    },
+
+    _bezierPoints: (c1, c2, numPoints = 30) => {
+        const lat1 = c1[0], lng1 = c1[1];
+        const lat2 = c2[0], lng2 = c2[1];
+        const midLat = (lat1 + lat2) / 2;
+        const midLng = (lng1 + lng2) / 2;
+        const dLat = lat2 - lat1;
+        const dLng = lng2 - lng1;
+        const dist = Math.sqrt(dLat * dLat + dLng * dLng);
+
+        // Curvatura muy suave — solo lo justo para no ir por el mar
+        const curvature = dist * 0.18;
+
+        // Siempre desplazamos el punto de control hacia el norte (interior)
+        // nunca hacia el sur (mar)
+        const ctrlLat = midLat + curvature;
+        const ctrlLng = midLng;
+
+        const points = [];
+        for (let i = 0; i <= numPoints; i++) {
+            const t = i / numPoints;
+            const mt = 1 - t;
+            const lat = mt * mt * lat1 + 2 * mt * t * ctrlLat + t * t * lat2;
+            const lng = mt * mt * lng1 + 2 * mt * t * ctrlLng + t * t * lng2;
+            points.push([lat, lng]);
+        }
+        return points;
     },
 
     drawFlows: (data, coords, mode = 'all') => {
@@ -99,6 +140,13 @@ const UI = {
         } else if (mode === 'malaga') {
             filtered = filtered.filter(f => String(f.origen).startsWith('29') || String(f.destino).startsWith('29'));
         }
+
+        // Mostrar solo flujos que conecten con las capitales presentes en los datos activos
+        const ACTIVE_CAPS = ['41091', '29067'].filter(id => data.allMuni[id]);
+        filtered = filtered.filter(f =>
+            ACTIVE_CAPS.includes(String(f.origen)) || ACTIVE_CAPS.includes(String(f.destino))
+        );
+
         let top = filtered.slice(0, 40); // Mostrar 40 flujos para llenar el mapa
         const max = (top[0]?.viajes || top[0]?.total || 1);
         const muniMap = data.allMuni || {};
@@ -120,9 +168,11 @@ const UI = {
             // Opacidad: Mayor opacidad para los importantes
             const opacity = isHigh ? 0.85 : isMedium ? 0.65 : 0.4;
 
+            const curvePoints = UI._bezierPoints(c1, c2);
+
             // Capa 1 — halo suave (detrás) para dar efecto de brillo a los flujos más altos
             if (isHigh || isMedium) {
-                const halo = L.polyline([c1, c2], {
+                const halo = L.polyline(curvePoints, {
                     weight: weight + 4,
                     color: color,
                     opacity: opacity * 0.3,
@@ -135,7 +185,7 @@ const UI = {
             }
 
             // Capa 2 — línea principal (encima)
-            const line = L.polyline([c1, c2], {
+            const line = L.polyline(curvePoints, {
                 weight: weight,
                 color: color,
                 opacity: opacity,
@@ -176,7 +226,7 @@ const UI = {
             const pct = (val / max * 100).toFixed(0);
             const provName = String(e.origen).startsWith('41') ? 'Sevilla' : 'Málaga';
             const color = provName === 'Sevilla' ? 'var(--sevilla)' : 'var(--malaga)';
-            const muniName = data.allMuni[e.origen] || e.origen;
+            const muniName = data.allMuni[String(e.origen)] || e.origen;
             const tr = document.createElement('tr');
             tr.innerHTML = `<td class="rank-num">${i + 1}</td><td class="rank-name">${muniName}</td><td><span class="tag-${provName === 'Sevilla' ? 'sev' : 'mal'} flow-badge" style="font-size:11px">${provName}</span></td><td class="rank-bar-wrap"><div class="rank-bar" style="width:${pct}%;background:${color}"></div></td><td class="rank-val" style="color:${color}">${val.toLocaleString('es-ES')}</td>`;
             container.querySelector('tbody').appendChild(tr);
@@ -229,7 +279,7 @@ const UI = {
         if (compView !== 'festivo') datasets.push({ label: 'Laborable', data: top12.map(d => d.laborable), backgroundColor: 'rgba(200,80,42,0.85)', borderRadius: 5 });
         if (compView !== 'laborable') datasets.push({ label: 'Festivo', data: top12.map(d => d.festivo), backgroundColor: 'rgba(122,158,126,0.75)', borderRadius: 5 });
         if (chartComp) chartComp.destroy();
-        chartComp = new Chart(ctx, { type: 'bar', data: { labels: top12.map(d => data.allMuni[d.origen] || d.origen), datasets }, options: UI.chartOpts('Desplazamientos', true) });
+        chartComp = new Chart(ctx, { type: 'bar', data: { labels: top12.map(d => data.allMuni[String(d.origen)] || d.origen), datasets }, options: UI.chartOpts('Desplazamientos', true) });
     },
 
     chartOpts: (label, legend) => ({
@@ -294,7 +344,7 @@ const UI = {
             const p = d.pct_dependencia || 0;
             const rClass = p > 25 ? 'high' : p > 15 ? 'med' : 'low';
             const prov = String(d.municipio).startsWith('41') ? 'Sevilla' : 'Málaga';
-            const name = muniMap[d.municipio] || d.municipio;
+            const name = muniMap[String(d.municipio)] || d.municipio;
             return `<div class="dorm-card reveal"><div class="dorm-city">${name}</div><div class="dorm-ratio ${rClass}">${p.toFixed(1)}%</div><div class="dorm-label">dependencia</div><div class="dorm-prov" style="color:var(--${prov.toLowerCase()})">${prov}</div></div>`;
         }).join('');
         UI.initReveal();
@@ -308,7 +358,7 @@ const UI = {
         const container = document.getElementById('comp-table'); if (!container) return;
         const muniMap = data.allMuni || {};
         container.innerHTML = `<table class="rank-table"><thead><tr><th>Municipio</th><th>Provincia</th><th>Laborable</th><th>Festivo</th></tr></thead><tbody>${(data.comparativa || []).slice(0, 10).map(d => {
-            const name = muniMap[d.origen] || d.origen;
+            const name = muniMap[String(d.origen)] || d.origen;
             const prov = String(d.origen).startsWith('41') ? 'Sevilla' : 'Málaga';
             return `<tr><td>${name}</td><td class="rank-num">${prov}</td><td style="font-family:'Syne';font-weight:700">${(d.laborable || 0).toLocaleString()}</td><td style="font-family:'Syne'">${(d.festivo || 0).toLocaleString()}</td></tr>`;
         }).join('')}</tbody></table>`;

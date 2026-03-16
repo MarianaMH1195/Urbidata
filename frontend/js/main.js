@@ -17,8 +17,15 @@ async function updateAllData(prov = null) {
         Api.fetchFlujos(prov)
     ]);
 
-    // Consolidamos los metadatos de municipios para que la UI pueda renderizar nombres y puntos
-    const allMuni = { ...Api.getMunicipiosSevilla(), ...Api.getMunicipiosMalaga() };
+    // Consolidamos los metadatos de municipios según el filtro de provincia
+    let allMuni;
+    if (prov === 'Sevilla') {
+        allMuni = Api.getMunicipiosSevilla();
+    } else if (prov === 'Málaga') {
+        allMuni = Api.getMunicipiosMalaga();
+    } else {
+        allMuni = { ...Api.getMunicipiosSevilla(), ...Api.getMunicipiosMalaga() };
+    }
     const keys = Object.keys(allMuni);
 
     globalData = { ranking, dormitorio, comparativa, flujos, allMuni, keys };
