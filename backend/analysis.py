@@ -23,6 +23,7 @@ import config
 
 # Usamos el formato .parquet porque es binario y mucho más rápido de leer que el CSV.
 # Este sistema de "búsqueda resiliente" asegura que el código no rompa si falta un formato.
+
 # Usamos el directorio procesado definido en config.py
 BASE_PATH = config.PROCESSED_DIR
 MASTER_FILE = "datos_limpios_provincias.csv"
@@ -46,6 +47,10 @@ def load_data(filename: str = None):
     name_csv = target if target.endswith(".csv") else f"{target}.csv"
 
     paths_to_try = [
+        str(config.OUTPUT_DIR / name_parquet),
+        str(config.OUTPUT_DIR / name_csv),
+        os.path.join("data/output", name_parquet),
+        os.path.join("data/output", name_csv)
         BASE_PATH / name_parquet,
         BASE_PATH / name_csv,
     ]
@@ -63,6 +68,103 @@ def load_data(filename: str = None):
             return df
     
     return None
+
+#Generación de outputs:
+#Lee el parquet y genera CSV para frontend.
+#Solo se ejecuta una vez.
+
+def build_outputs():
+    """
+    Lee datos_limpios_provincias.parquet y genera los 4 CSVs de output:
+    - ranking_municipios.csv
+    - flujos_top.csv
+    - pueblos_dormitorio.csv
+    - comparativa_lab_fest.csv
+    """
+    print("\n Generando archivos de output...")
+ 
+    # Cargamos el parquet limpio generado por cleaning.py
+    ruta_parquet = config.PROCESSED_DIR / "datos_limpios_provincias.parquet"
+    ruta_csv = config.PROCESSED_DIR / "datos_limpios_provincias.csv"
+ 
+    df = None
+    if os.path.exists(ruta_parquet):
+        print(f"   Cargando desde Parquet: {ruta_parquet}")
+        df = pd.read_parquet(ruta_parquet)
+    elif os.path.exists(ruta_csv):
+        print(f"   Cargando desde CSV: {ruta_csv}")
+        df = pd.read_csv(ruta_csv)
+    else:
+        print("❌ No se encontraron datos limpios. Ejecuta cleaning.py primero.")
+        return
+ 
+    # Identificamos las columnas de origen y destino (son dinámicas según versión MITMA)
+    col_origen = [c for c in df.columns if 'origen' in c.lower()][0]
+    col_destino = [c for c in df.columns if 'destino' in c.lower()][0]
+ 
+    # Nos aseguramos de que viajes es numérico
+    df['viajes'] = pd.to_numeric(df['viajes'], errors='coerce')
+ 
+    # Añadimos tipo_dia si no existe ya (laborable vs festivo)
+    if 'tipo_dia' not in df.columns:
+        df['fecha'] = pd.to_datetime(df['fecha'], format='%Y%m%d', errors='coerce')
+        df['tipo_dia'] = df['fecha'].dt.dayofweek.apply(
+            lambda x: 'laborable' if x < 5 else 'festivo'
+        )
+    # ── 1. Flujos top origen-destino ──────────────────────────
+    flujos = (
+        df.groupby([col_origen, col_destino, 'tipo_dia'])['viajes']
+        .sum().reset_index()
+        .rename(columns={col_origen: 'origen', col_destino: 'destino'})
+        .sort_values('viajes', ascending=False)
+    )
+    flujos.to_csv(config.OUTPUT_DIR / "flujos_top.csv", index=False)
+    print(f"   ✅ flujos_top.csv → {flujos.shape[0]} filas")
+ 
+    # ── 2. Ranking municipios hacia la capital ─────────────────
+    ranking = (
+        df[df[col_destino].isin(config.CAPITALES_IDS)]
+        .groupby([col_origen, col_destino, 'tipo_dia'])['viajes']
+        .sum().reset_index()
+        .rename(columns={col_origen: 'origen', col_destino: 'destino'})
+        .sort_values('viajes', ascending=False)
+    )
+    ranking.to_csv(config.OUTPUT_DIR / "ranking_municipios.csv", index=False)
+    print(f"   ✅ ranking_municipios.csv → {ranking.shape[0]} filas")
+ 
+    # ── 3. Pueblos dormitorio ──────────────────────────────────
+    total_por_municipio = df.groupby(col_origen)['viajes'].sum()
+    viajes_a_capital = (
+        df[df[col_destino].isin(config.CAPITALES_IDS)]
+        .groupby(col_origen)['viajes'].sum()
+    )
+    dormitorio = (viajes_a_capital / total_por_municipio * 100).dropna().reset_index()
+    dormitorio.columns = ['municipio', 'pct_dependencia']
+    dormitorio = dormitorio.sort_values('pct_dependencia', ascending=False)
+    dormitorio.to_csv(config.OUTPUT_DIR / "pueblos_dormitorio.csv", index=False)
+    print(f"   ✅ pueblos_dormitorio.csv → {dormitorio.shape[0]} filas")
+ 
+    # ── 4. Comparativa laborable vs festivo ───────────────────
+    # Usamos pivot_table para crear columnas 'laborable' y 'festivo'
+    comparativa = (
+        df.groupby([col_origen, 'tipo_dia'])['viajes']
+        .sum()
+        .unstack('tipo_dia')
+        .reset_index()
+        .rename(columns={col_origen: 'origen'})
+    )
+    comparativa.columns.name = None
+    # Nos aseguramos de que existen ambas columnas aunque no haya datos de un tipo
+    for col in ['laborable', 'festivo']:
+        if col not in comparativa.columns:
+            comparativa[col] = 0
+    comparativa.to_csv(config.OUTPUT_DIR / "comparativa_lab_fest.csv", index=False)
+    print(f"   ✅ comparativa_lab_fest.csv → {comparativa.shape[0]} filas")
+ 
+    print("\n✅ Todos los archivos de output generados correctamente.")
+
+
+#Fragmento 2: El "Traductor de nombres". Permite que el usuario pida "Sevilla" y el código entienda que debe filtrar por el ID '41'.
 
 # Fragmento 2: El "Traductor de nombres"
 def filter_by_provincia(df, col_name, provincia):
@@ -124,6 +226,11 @@ def get_comparativa(provincia: str = None):
     df = load_data()
     if df is not None and 'tipo_dia' in df.columns:
         df = filter_by_provincia(df, 'origen', provincia)
+         # Nos aseguramos de que las columnas existen antes de agrupar
+        cols_disponibles = [c for c in ['laborable', 'festivo'] if c in df.columns]
+        if not cols_disponibles:
+            return []
+        comp = df.groupby('origen')[cols_disponibles].sum().reset_index()
         # Sumamos por origen y tipo de día, luego pivotamos
         comp = df.groupby(['origen', 'tipo_dia'])['viajes'].sum().unstack('tipo_dia').fillna(0).reset_index()
         # Aseguramos que existan las columnas para que el frontend no rompa
@@ -204,7 +311,13 @@ Es el corazón lógico que alimenta al Front-end de Urbidata.
 
 def run_analysis():
     print("Iniciando análisis lógico de datos...")
-    
+    # Primero generamos los CSVs de output si no existen
+    ranking_check = config.OUTPUT_DIR / "ranking_municipios.csv"
+    if not os.path.exists(ranking_check):
+        print("No se encontraron archivos de output. Generando...")
+        build_outputs()
+    else:
+        print("✅ Archivos de output ya existen. Saltando generación.")
     # Probando algunos datos para ver que funciona:
     ranking_sevilla = get_ranking("sevilla", 5)
     print(f"Top 5 Orígenes en Sevilla: {ranking_sevilla}")
