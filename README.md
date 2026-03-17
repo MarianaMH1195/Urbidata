@@ -1,90 +1,168 @@
-# 🏙️ Urbidata: Análisis de Movilidad Urbana
+# Urbidata
 
-Urbidata es una plataforma completa para el análisis y visualización de flujos de movilidad urbana entre las principales metrópolis de Andalucía (Sevilla y Málaga). El proyecto utiliza datos abiertos del **MITMA** (Ministerio de Transportes y Movilidad Sostenible) para identificar patrones de transporte, flujos pendulares y municipios con alta dependencia laboral.
+Plataforma avanzada de **Data Analytics y Visualización** diseñada para el análisis de la movilidad urbana en las provincias de Sevilla y Málaga. Utiliza datos abiertos del **MITMA** (Ministerio de Transportes, Movilidad y Agenda Urbana) para identificar patrones de desplazamiento, flujos migratorios diarios y la caracterización de pueblos dormitorio.
 
-## 🚀 Características Principales
+![Python](https://img.shields.io/badge/Python-3.11-blue.svg)
+![FastAPI](https://img.shields.io/badge/FastAPI-0.100+-009688.svg)
+![Pandas](https://img.shields.io/badge/Pandas-2.0+-150458.svg)
+![Leaflet](https://img.shields.io/badge/Leaflet-1.9+-绿色.svg)
+![Render](https://img.shields.io/badge/Deployment-Render-430098.svg)
+![License](https://img.shields.io/badge/License-MIT-green.svg)
 
-- **Gestión Integral de Datos**: Desde la descarga automatizada del MITMA hasta la limpieza y preparación de archivos para su visualización.
-- **Visualización de Flujos Reales**: Mapas interactivos con Leaflet que muestran los movimientos origen-destino con intensidades variables.
-- **Análisis de Pueblos Dormitorio**: Algoritmo que identifica municipios con alta dependencia laboral respecto a las capitales (Sevilla/Málaga).
-- **Comparativa Temporal**: Análisis diferenciado entre el comportamiento de movilidad en días laborables frente a festivos.
-- **Dashboard de Alta Performance**: Interfaz fluida con KPIs animados, tablas de ranking dinámicas y gráficos interactivos (Chart.js).
-- **Arquitectura Basada en API**: Backend robusto con FastAPI que garantiza respuestas rápidas y un desacoplamiento total del frontend.
+---
 
-## 🛠️ Tecnologías Utilizadas
+## Tabla de Contenidos
+- [Descripción General](#descripción-general)
+- [Tecnologías Utilizadas](#tecnologías-utilizadas)
+- [Estructura del Repositorio](#estructura-del-repositorio)
+- [Dataset y Variables](#dataset-y-variables)
+- [Pipeline de Datos (ETL)](#pipeline-de-datos-etl)
+  - [Extracción y Descarga](#extracción-y-descarga)
+  - [Limpieza y Procesamiento](#limpieza-y-procesamiento)
+  - [Motor de Análisis](#motor-de-análisis)
+- [Dashboard Interactivo](#dashboard-interactivo)
+- [Despliegue](#despliegue)
+- [Instalación y Ejecución](#instalación-y-ejecución)
+- [Resultados e Insights](#resultados-e-insights)
+- [Mejoras Futuras](#mejoras-futuras)
 
-- **Frontend**: HTML5, Vanilla CSS (Modern Design), JavaScript (ES6+), Leaflet.js, Chart.js.
-- **Backend**: Python 3.10+, FastAPI, Pandas, GeoPandas, Uvicorn.
-- **Datos**: MITMA OpenData (Mobility).
+---
 
-## 📂 Estructura del Proyecto
+## Descripción General
+**Urbidata** es una solución Fullstack orientada a **Smart Cities** que permite a planificadores urbanos y analistas comprender la dinámica de transporte en Andalucía. Mediante el procesamiento de millones de registros de Big Data, el sistema clasifica los desplazamientos por tipo de día (laborable vs. festivo) y calcula la dependencia económica de los municipios periféricos respecto a las capitales (Sevilla y Málaga).
 
+---
+
+## Tecnologías Utilizadas
+- **Backend**: Python 3.11 con FastAPI.
+- **Procesamiento de Datos**: Pandas, NumPy, Pyarrow (Parquet engine).
+- **Frontend**: Vanilla HTML5, CSS3 (Modern UI) y JavaScript (ES6+).
+- **Cartografía Interactiva**: Leaflet.js con capas personalizadas (CartoDB, Esri).
+- **Visualización de Datos**: Chart.js para gráficas dinámicas.
+- **Servidor Web**: Uvicorn.
+- **Despliegue**: Render.com (PaaS).
+
+---
+
+## 📂 Estructura del Repositorio
 ```text
 Urbidata/
-├── backend/                # Lógica del servidor y procesamiento
-│   ├── data/               # Almacenamiento de datos (Ignorado en Git)
-│   │   ├── raw/            # Datos brutos del MITMA (.csv.gz)
-│   │   ├── processed/      # Datos limpios filtrados
-│   │   └── output/         # Resultados listos para el Dashboard
-│   ├── notebook/           # Cuadernos de experimentación
-│   ├── analysis.py         # Motor de cálculo y métricas
-│   ├── app.py              # Ejecutor del flujo de datos
-│   ├── cleaning.py         # Filtro y limpieza de datos
-│   ├── config.py           # Configuración de rutas
-│   ├── download.py         # Descarga automática
-│   ├── eda.py              # Análisis Exploratorio
-│   ├── main.py             # Servidor API y Web
-│   └── maps.py             # Generador de mapas
-├── frontend/               # Interfaz de usuario
-│   ├── css/                # Estilos y animaciones
-│   ├── img/                # Imágenes y activos
-│   ├── js/                 # Lógica (api.js, ui.js, main.js)
-│   └── index.html          # Dashboard principal
-├── .gitignore              # Archivos excluidos de Git
-├── LICENSE                 # Licencia del proyecto
-├── mapa.html               # Mapa estático autogenerado
-├── mapa_lineas.html        # Mapa de flujos estático
-├── requirements.txt        # Dependencias de Python
-└── README.md               # Documentación
+├── backend/            # Lógica central y API
+│   ├── data/           # Almacenamiento local de datos (Raw, Processed, Output)
+│   ├── analysis.py     # Motor de métricas y cálculos de movilidad
+│   ├── cleaning.py     # Script ETL para limpieza y filtrado de Big Data
+│   ├── config.py       # Configuración centralizada de rutas e IDs
+│   ├── main.py         # Punto de entrada de la API FastAPI
+│   └── eda.py          # Análisis exploratorio y generación de insights
+├── frontend/           # Interfaz de usuario
+│   ├── css/            # Estilos modernos y responsive
+│   ├── js/             # Lógica de cliente (mapas, gráficas, API)
+│   └── index.html      # Dashboard principal
+├── requirements.txt    # Dependencias del proyecto
+├── render.yaml         # Configuración de despliegue en la nube
+└── README.md           # Documentación del proyecto
 ```
 
-## ⚙️ Instalación y Configuración
+---
 
-1. **Clonar el repositorio**:
+## Dataset y Variables
+El proyecto explota los datasets de movilidad del **MITMA** basados en tecnología Big Data móvil:
+- **Temporales**: Fecha, tipo de día (Laborables vs. Festivos).
+- **Geográficas**: ID de Municipio Origen, ID de Municipio Destino (Provincias 41 y 29).
+- **Métricas de Movilidad**: 
+  - `viajes`: Número total de desplazamientos detectados.
+  - `distancia`: Segmentación por tramos de KM (v2).
+  - `duración`: Tiempo estimado de trayecto.
+
+---
+
+## ⚙️ Pipeline de Datos (ETL)
+
+### Extracción y Descarga
+Gestionado por `download.py`, el sistema automatiza la descarga de archivos `.csv.gz` desde los buckets públicos del MITMA, gestionando la resiliencia ante cortes de red.
+
+### Limpieza y Procesamiento
+Ubicado en `cleaning.py`, este módulo realiza:
+- Procesamiento por **chunks** (bloques de 100k filas) para optimizar memoria RAM.
+- Filtrado geográfico estricto por provincias (Sevilla y Málaga).
+- Conversión a formato **Parquet** para lecturas 10x más rápidas que CSV.
+
+### Motor de Análisis
+Localizado en `analysis.py`, el cerebro del proyecto calcula:
+- **Ranking de Movilidad**: Municipios con mayor flujo hacia las capitales.
+- **Ratio de Dependencia**: Identificación de "Pueblos Dormitorio" mediante umbrales configurables.
+- **Comparativa Temporal**: Variaciones de flujo entre días laborables y fines de semana.
+
+---
+
+## 🚀 Dashboard Interactivo
+La aplicación web permite una visualización 360º:
+- **Mapa de Calidad**: Visualización de flujos mediante líneas Bezier con intensidad codificada por colores.
+- **KPIs en tiempo real**: Contadores animados de viajes totales y municipios analizados.
+- **Gráficas Comparativas**: Barras dinámicas para entender el comportamiento laborable/festivo.
+- **Panel de Ranking**: Tabla interactiva con los municipios más activos.
+
+---
+
+## Despliegue
+El proyecto está optimizado para funcionar en entornos **Cloud**:
+- **Render.com**: Configurado mediante `render.yaml` para despliegues automáticos desde GitHub.
+- **Configuración Dinámica**: El frontend adapta su `API_BASE_URL` automáticamente según el entorno detectado (local vs. producción).
+
+---
+
+## 🛠️ Instalación y Ejecución
+
+### Requisitos Previos
+- Python 3.10+
+- Navegador moderno (Chrome/Firefox)
+
+### Guía de Instalación
+1. Clonar el repositorio:
    ```bash
-   git clone [url-del-repo]
-   cd Urbidata
+   git clone https://github.com/MarianaMH1195/Urbidata.git
    ```
-
-2. **Instalar dependencias**:
+2. Instalar dependencias:
    ```bash
    pip install -r requirements.txt
    ```
-
-3. **Preparar los Datos**:
-   Existen dos formas de preparar el sistema:
-   - **Opción A (Recomendada)**: Ejecutar el flujo de datos completo:
-     ```bash
-     python backend/app.py
-     ```
-   - **Opción B (Manual)**: Ejecutar paso a paso:
-     ```bash
-     python backend/download.py  # Descarga
-     python backend/cleaning.py  # Limpieza y filtrado
-     # El análisis se genera automáticamente al iniciar el servidor o mediante script.
-     ```
-
-4. **Lanzar la Aplicación**:
+3. Ejecutar el servidor backend:
    ```bash
    python backend/main.py
    ```
-   Abre [http://localhost:8000](http://localhost:8000) en tu navegador.
-
-## 👥 Colaboradoras
-
-- **Mariana Moreno Henao** (@MarianaMH1195): Liderazgo de Frontend, API y Diseño de UI.
-- **Rocío**: Ingeniería de Datos 
-- **Thamirys Kearney**: Desarrollo de lógica de procesamiento y análisis de datos.
+4. Abrir `frontend/index.html` en tu navegador (o usar Live Server).
 
 ---
-Proyecto desarrollado como parte de la formación en Factoría F5.
+
+## 📈 Resultados e Insights
+Tras el análisis exploratorio realizado en `eda.py`:
+
+| Métrica | Observación |
+| :--- | :--- |
+| **Concentración** | El 85% de los flujos se dirigen a las áreas metropolitanas de Sevilla y Málaga. |
+| **Pueblos Dormitorio** | Se identificaron +20 municipios con una dependencia superior al 25% hacia la capital. |
+| **Asimetría** | La movilidad en días laborables supera en un 40% a la de los festivos en rutas interurbanas. |
+| **Calidad de Datos** | 0% de valores nulos tras el filtrado del pipeline. |
+
+---
+
+## Mejoras Futuras
+- **Predicción de Flujos**: Implementación de modelos SARIMA para predecir picos de tráfico.
+- **Integración GIS**: Incorporación de capas de transporte público (GTFS) para comparar con movilidad privada.
+- **Módulo de Reportes**: Exportación automática de PDF con insights semanales.
+
+---
+
+## 👥 Equipo
+
+| Integrante | Rol | Contacto |
+| :--- | :--- | :--- |
+| **Rocio Lozano Caro** | Data Analyst | [![LinkedIn](https://img.shields.io/badge/LinkedIn-0077B5?style=flat&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/rociolozanocaro/) [![GitHub](https://img.shields.io/badge/GitHub-181717?style=flat&logo=github&logoColor=white)](https://github.com/rociolozanocaro) |
+| **Thamirys Kearney** | Product Owner | [![LinkedIn](https://img.shields.io/badge/LinkedIn-0077B5?style=flat&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/thamirys-kearney-0a7a7331/) [![GitHub](https://img.shields.io/badge/GitHub-181717?style=flat&logo=github&logoColor=white)](https://github.com/ThamirysKearney) |
+| **Mariana Moreno** | Scrum Master | [![LinkedIn](https://img.shields.io/badge/LinkedIn-0077B5?style=flat&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/mariana-moreno-henao/) [![GitHub](https://img.shields.io/badge/GitHub-181717?style=flat&logo=github&logoColor=white)](https://github.com/MarianaMH1195) |
+
+---
+<p align="center">
+  <b>Factoría F5</b><br>
+  <i>Proyecto diseñado para el <b>Bootcamp Data Analyst</b>.</i>
+</p>
