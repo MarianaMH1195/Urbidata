@@ -1,0 +1,10 @@
+repaso_mejoras_backend.md
+__pycache__/
+*.pyc
+backend/__pycache__/
+backend/data/
+backend/__pycache__/
+
+# Entornos virtuales (Python venv)
+.venv/
+venv/

@@ -1,0 +1,39 @@
+"""
+Urbidata - Orquestador del Pipeline (APP)
+Este archivo es el punto de entrada. Ejecuta todo el proceso en orden.
+"""
+
+import config
+import download
+import cleaning
+import analysis
+import maps
+
+def run_pipeline():
+    """
+    Ejecuta el pipeline completo.
+    """
+    print("="*50)
+    print(" URBIDATA - INICIANDO PIPELINE DE DATOS")
+    print("="*50)
+
+    # 1. Descarga
+    download.run_download()
+
+    # 2. Limpieza (Filtro por provincia y Chunks)
+    cleaning.process_files()
+
+    # 3. Análisis (Cálculo de métricas)
+    print("\n Análisis de datos (hoy no, mañana...)")
+    analysis.run_analysis()
+
+    # 4. Mapas (Visualización)
+    print("\n Generación de mapas (hoy no, mañana...)")
+    maps.generate_maps()
+
+    print("\n" + "="*50)
+    print(" PIPELINE FINALIZADO CON ÉXITO")
+    print("="*50)
+
+if __name__ == "__main__":
+    run_pipeline()
