@@ -90,9 +90,10 @@ const UI = {
 
         const muniMap = data.allMuni || {};
         Object.keys(muniMap).forEach(k => {
-            const c = coords[k]; if (!c) return;
-            const isCap = String(k) === "41091" || String(k) === "29067";
-            const color = String(k).startsWith("41") ? '#FF6DAA' : '#00E5C8';
+            const normK = Api.normalizeId(k);
+            const c = coords[normK] || coords[k]; if (!c) return;
+            const isCap = normK === "41091" || normK === "29067";
+            const color = normK.startsWith("41") ? '#FF6DAA' : '#00E5C8';
             const radius = isCap ? 8 : 4;
             const marker = L.circleMarker(c, { radius, color, fillColor: color, fillOpacity: 0.7, weight: isCap ? 2 : 1 });
             marker.bindTooltip(`<strong>${muniMap[k]}</strong>`, { className: 'tooltip-custom' });
@@ -152,7 +153,10 @@ const UI = {
         const muniMap = data.allMuni || {};
 
         top.forEach(f => {
-            const c1 = coords[f.origen], c2 = coords[f.destino]; if (!c1 || !c2) return;
+            const nOrig = Api.normalizeId(f.origen), nDest = Api.normalizeId(f.destino);
+            const c1 = coords[nOrig] || coords[f.origen];
+            const c2 = coords[nDest] || coords[f.destino];
+            if (!c1 || !c2) return;
             const val = f.viajes || f.total || 0;
             const norm = val / max; 
 
@@ -194,7 +198,8 @@ const UI = {
                 // Ya no usamos dashArray para que todas las líneas sean claramente visibles
             });
 
-            const n1 = muniMap[f.origen] || f.origen, n2 = muniMap[f.destino] || f.destino;
+            const n1 = muniMap[f.origen] || Api.getName(f.origen) || f.origen;
+            const n2 = muniMap[f.destino] || Api.getName(f.destino) || f.destino;
             const t_lab = (f.laborable || 0).toLocaleString('es-ES');
             const t_fes = (f.festivo || 0).toLocaleString('es-ES');
 

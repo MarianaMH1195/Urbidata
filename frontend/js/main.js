@@ -36,6 +36,16 @@ async function updateAllData(prov = null) {
         } else {
             allMuni = { ...Api.getMunicipiosSevilla(), ...Api.getMunicipiosMalaga() };
         }
+        // Enriquecer allMuni con cualquier ID que aparezca en flujos
+        // (incluyendo variantes _AM de MITMA que no están en el mapa base)
+        (flujosRaw || []).forEach(f => {
+            [f.origen, f.destino].forEach(id => {
+                if (!allMuni[id]) {
+                    const name = Api.getName(id);
+                    if (name && name !== id) allMuni[id] = name;
+                }
+            });
+        });
         const keys = Object.keys(allMuni);
 
         let flujos = flujosRaw || [];
