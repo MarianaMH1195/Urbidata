@@ -171,20 +171,21 @@ const UI = {
             
             const color = isHigh ? '#C8502A' : isMedium ? '#C9973A' : '#7A9E7E';
 
-            // Grosores tácticos: el Alto tiene mucho peso para centrar la vista
-            const weight = isHigh ? 5 : isMedium ? 3 : 1.5;
-            
-            // Opacidades: Altos muy sólidos, Medios claros, Bajos sutiles
-            const opacity = isHigh ? 0.92 : isMedium ? 0.70 : 0.35;
+            // Grosor: alto=grueso, medio=moderado, bajo=fino pero visible
+            const weight  = isHigh ? 5 : isMedium ? 3 : 2;
+            // Opacidad: todos claramente visibles
+            const opacity = isHigh ? 0.92 : isMedium ? 0.75 : 0.65;
+            // Trazo: alto y medio = sólido, bajo = punteado para diferenciarlo
+            const dashArray = isHigh || isMedium ? null : '5, 7';
 
             const curvePoints = UI._bezierPoints(c1, c2);
 
-            // Capa 1 — halo suave (detrás) para dar efecto de brillo a los flujos más altos
+            // Halo para alto y medio (efecto de brillo)
             if (isHigh || isMedium) {
                 const halo = L.polyline(curvePoints, {
                     weight: weight + 4,
                     color: color,
-                    opacity: opacity * 0.3,
+                    opacity: opacity * 0.25,
                     smoothFactor: 1,
                     lineCap: 'round',
                     interactive: false
@@ -193,15 +194,16 @@ const UI = {
                 halo.addTo(map);
             }
 
-            // Capa 2 — línea principal (encima)
-            const line = L.polyline(curvePoints, {
-                weight: weight,
-                color: color,
-                opacity: opacity,
+            // Línea principal
+            const lineOpts = {
+                weight,
+                color,
+                opacity,
                 smoothFactor: 2,
                 lineCap: 'round'
-                // Ya no usamos dashArray para que todas las líneas sean claramente visibles
-            });
+            };
+            if (dashArray) lineOpts.dashArray = dashArray;
+            const line = L.polyline(curvePoints, lineOpts);
 
             const n1 = muniMap[f.origen] || Api.getName(f.origen) || f.origen;
             const n2 = muniMap[f.destino] || Api.getName(f.destino) || f.destino;
