@@ -64,57 +64,16 @@ const Api = {
     },
 
     fetchFlujos: async (provincia = null) => {
-        // Para este requerimiento específico, utilizaremos los datos simulados refinados
-        return Api.generateData(provincia);
-    },
-
-    // Generador de datos simulados para pruebas de flujo y dependencia
-    generateData: (prov = null) => {
-        const seed = 123;
-        let s = seed;
-        const rand = () => { s = (s * 9301 + 49297) % 233280; return s / 233280; };
-        
-        const flujos = [];
-        const mSevilla = Object.keys(MUNICIPIOS_SEV);
-        const mMalaga = Object.keys(MUNICIPIOS_MAL);
-        const allKeys = [...mSevilla, ...mMalaga];
-
-        const altaDependencia = ['29051', '29078', '29030', '29013', '29065', 
-                                 '41038', '41004', '41078', '41063', '41013'];
-
-        allKeys.forEach(orig => {
-            allKeys.forEach(dest => {
-                if (orig === dest) return;
-                
-                // Filtro por provincia seleccionada
-                const oProv = mSevilla.includes(orig) ? 'Sevilla' : 'Málaga';
-                const dProv = mSevilla.includes(dest) ? 'Sevilla' : 'Málaga';
-                if (prov && prov !== 'Todas las provincias' && oProv !== prov && dProv !== prov) return;
-
-                const interprov = (oProv !== dProv);
-                let base = Math.exp(rand() * 2) * 100;
-
-                // Lógica de flujos realistas (Problema 1 y 2)
-                // Si el destino es una capital, el flujo es mucho mayor
-                if (dest === '41091' || dest === '29067') base *= 4.5;
-                // Si el origen es una capital, también hay flujo de retorno importante
-                if (orig === '41091' || orig === '29067') base *= 2.0;
-                // Municipios dormitorio tienen flujo especialmente alto hacia la capital
-                if (altaDependencia.includes(orig) && (dest === '41091' || dest === '29067')) base *= 2.5;
-                // Flujos interprovinciales son marginales
-                if (interprov) base *= 0.08;
-
-                flujos.push({
-                    origen: orig,
-                    destino: dest,
-                    laborable: Math.round(base * (0.7 + rand() * 0.3)),
-                    festivo: Math.round(base * (0.3 + rand() * 0.2)),
-                    viajes: Math.round(base)
-                });
-            });
-        });
-
-        return flujos.sort((a, b) => b.viajes - a.viajes);
+        try {
+            const url = provincia ? `${CONFIG.API_BASE_URL}/flujos?provincia=${provincia}` : `${CONFIG.API_BASE_URL}/flujos`;
+            const response = await fetch(url);
+            if (response.ok) return await response.json();
+            console.warn("API Flujos returned error, using empty data");
+            return [];
+        } catch (e) { 
+            console.error("Error fetching flujos:", e); 
+            return [];
+        }
     },
 
     getCoords: () => COORDS,
