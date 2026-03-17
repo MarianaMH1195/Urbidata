@@ -1,4 +1,4 @@
-// ==================== MAIN MODULE ====================
+
 let globalData;
 window.mapMode = 'all';
 window.rankMode = 'salidas';
