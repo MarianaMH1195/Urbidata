@@ -4,11 +4,12 @@ Urbidata es una plataforma completa para el análisis y visualización de flujos
 
 ## 🚀 Características Principales
 
-- **Pipeline Automatizado**: Descarga y procesamiento automático de datos masivos del MITMA.
-- **Arquitectura Modular**: Backend dividido en módulos especializados (descarga, limpieza, análisis).
-- **API REST**: Servidor de alta velocidad construido con FastAPI para servir métricas en tiempo real.
-- **Premium Dashboard**: Interfaz web interactiva con mapas dinámicos (Leaflet/Folium), KPIs animados y gráficas detalladas (Chart.js).
-- **Análisis Avanzado**: Identificación de pueblos dormitorio y comparativas entre días laborables y festivos.
+- **Gestión Integral de Datos**: Desde la descarga automatizada del MITMA hasta la limpieza y preparación de archivos para su visualización.
+- **Visualización de Flujos Reales**: Mapas interactivos con Leaflet que muestran los movimientos origen-destino con intensidades variables.
+- **Análisis de Pueblos Dormitorio**: Algoritmo que identifica municipios con alta dependencia laboral respecto a las capitales (Sevilla/Málaga).
+- **Comparativa Temporal**: Análisis diferenciado entre el comportamiento de movilidad en días laborables frente a festivos.
+- **Dashboard de Alta Performance**: Interfaz fluida con KPIs animados, tablas de ranking dinámicas y gráficos interactivos (Chart.js).
+- **Arquitectura Basada en API**: Backend robusto con FastAPI que garantiza respuestas rápidas y un desacoplamiento total del frontend.
 
 ## 🛠️ Tecnologías Utilizadas
 
@@ -21,22 +22,29 @@ Urbidata es una plataforma completa para el análisis y visualización de flujos
 ```text
 Urbidata/
 ├── backend/                # Lógica del servidor y procesamiento
-│   ├── notebook/           # Notebooks de experimentos (.ipynb)
-│   ├── analysis.py         # Motor de cálculo y agregación
+│   ├── data/               # Almacenamiento de datos (Ignorado en Git)
+│   │   ├── raw/            # Datos brutos del MITMA (.csv.gz)
+│   │   ├── processed/      # Datos limpios filtrados
+│   │   └── output/         # Resultados listos para el Dashboard
+│   ├── notebook/           # Cuadernos de experimentación
+│   ├── analysis.py         # Motor de cálculo y métricas
+│   ├── app.py              # Ejecutor del flujo de datos
 │   ├── cleaning.py         # Filtro y limpieza de datos
-│   ├── config.py           # Configuración centralizada
-│   ├── download.py         # Descarga automática del MITMA
-│   ├── main.py             # Servidor API y Frontend
-│   ├── maps.py             # Generador de mapas dinámicos
-│   └── eda.py              # Análisis Exploratorio de Datos
-├── frontend/               # Interfaz de usuario (página web)
+│   ├── config.py           # Configuración de rutas
+│   ├── download.py         # Descarga automática
+│   ├── eda.py              # Análisis Exploratorio
+│   ├── main.py             # Servidor API y Web
+│   └── maps.py             # Generador de mapas
+├── frontend/               # Interfaz de usuario
 │   ├── css/                # Estilos y animaciones
-│   ├── js/                 # Lógica API y UI (api.js, ui.js, main.js)
+│   ├── img/                # Imágenes y activos
+│   ├── js/                 # Lógica (api.js, ui.js, main.js)
 │   └── index.html          # Dashboard principal
-├── mapa.html               # Mapa auto-generado (estático)
-├── mapa_lineas.html        # Mapa de flujos (estático)
-├── requirements.txt        # Dependencias unificadas
+├── .gitignore              # Archivos excluidos de Git
 ├── LICENSE                 # Licencia del proyecto
+├── mapa.html               # Mapa estático autogenerado
+├── mapa_lineas.html        # Mapa de flujos estático
+├── requirements.txt        # Dependencias de Python
 └── README.md               # Documentación
 ```
 
@@ -53,16 +61,20 @@ Urbidata/
    pip install -r requirements.txt
    ```
 
-3. **Preparar los datos** (Ejecutar en orden):
-   ```bash
-   # Opcional: Descargar datos (requiere conexión al MITMA)
-   python backend/download.py
+3. **Preparar los Datos**:
+   Existen dos formas de preparar el sistema:
+   - **Opción A (Recomendada)**: Ejecutar el flujo de datos completo:
+     ```bash
+     python backend/app.py
+     ```
+   - **Opción B (Manual)**: Ejecutar paso a paso:
+     ```bash
+     python backend/download.py  # Descarga
+     python backend/cleaning.py  # Limpieza y filtrado
+     # El análisis se genera automáticamente al iniciar el servidor o mediante script.
+     ```
 
-   # Limpiar y generar datos maestros:
-   python backend/cleaning.py
-   ```
-
-4. **Lanzar la aplicación**:
+4. **Lanzar la Aplicación**:
    ```bash
    python backend/main.py
    ```
@@ -72,7 +84,7 @@ Urbidata/
 
 - **Mariana Moreno Henao** (@MarianaMH1195): Liderazgo de Frontend, API y Diseño de UI.
 - **Rocío**: Ingeniería de Datos 
-- **Thamirys Kearney**: Desarrollo de Pipeline, Procesamiento y Lógica de Análisis.
+- **Thamirys Kearney**: Desarrollo de lógica de procesamiento y análisis de datos.
 
 ---
 Proyecto desarrollado como parte de la formación en Factoría F5.
