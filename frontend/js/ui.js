@@ -149,7 +149,9 @@ const UI = {
         // );
 
         let top = filtered.slice(0, 100); 
-        const max = (top[0]?.viajes || top[0]?.total || 1);
+        // Usamos el max GLOBAL (antes del filtro) para que la escala sea consistente
+        const allFlows = data.flujos || [];
+        const max = allFlows[0]?.viajes || allFlows[0]?.total || top[0]?.viajes || 1;
         const muniMap = data.allMuni || {};
 
         top.forEach(f => {
@@ -160,9 +162,12 @@ const UI = {
             const val = f.viajes || f.total || 0;
             const norm = val / max; 
 
-            // Umbrales de intensidad refinados (Problema 3)
-            const isHigh = norm > 0.35;   // flujos dominantes (dormitorio → capital)
-            const isMedium = norm > 0.10 && norm <= 0.35; // flujos medios
+            // Umbrales calibrados con datos reales
+            // Alto (>20% del máximo): flujos principales — aparecen en ROJO
+            // Medio (5-20%): flujos secundarios — aparecen en NARANJA
+            // Bajo (<5%): flujos menores — aparecen en VERDE punteado
+            const isHigh   = norm > 0.20;
+            const isMedium = norm > 0.05 && norm <= 0.20;
             
             const color = isHigh ? '#C8502A' : isMedium ? '#C9973A' : '#7A9E7E';
 
