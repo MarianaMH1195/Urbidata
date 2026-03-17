@@ -49,6 +49,7 @@ Plataforma avanzada de **Data Analytics y Visualización** diseñada para el an�
 Urbidata/
 ├── backend/            # Lógica central y API
 │   ├── data/           # Almacenamiento local de datos (Raw, Processed, Output)
+│   ├── notebook/       # Notebooks de análisis y guías (EDA interactivo)
 │   ├── analysis.py     # Motor de métricas y cálculos de movilidad
 │   ├── cleaning.py     # Script ETL para limpieza y filtrado de Big Data
 │   ├── config.py       # Configuración centralizada de rutas e IDs
@@ -60,6 +61,7 @@ Urbidata/
 │   └── index.html      # Dashboard principal
 ├── requirements.txt    # Dependencias del proyecto
 ├── render.yaml         # Configuración de despliegue en la nube
+├── .gitignore          # Archivos excluidos de Git
 └── README.md           # Documentación del proyecto
 ```
 
