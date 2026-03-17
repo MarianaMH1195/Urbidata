@@ -376,11 +376,25 @@ const UI = {
             setTimeout(() => UI.initReveal(), 50);
         }
 
-        document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
         const btn = document.querySelector(`.nav-btn[onclick*="'${name}'"]`);
         if (btn) btn.classList.add('active');
+    },
+
+    toggleMenu: () => {
+        const nav = document.getElementById('main-nav');
+        if (nav) nav.classList.toggle('active');
+    },
+
+    closeMenu: () => {
+        const nav = document.getElementById('main-nav');
+        if (nav) nav.classList.remove('active');
     }
 };
+
+// Global shortcuts for onclick handlers
+const showSection = (name) => UI.showSection(name);
+const toggleMenu = () => UI.toggleMenu();
+const closeMenu = () => UI.closeMenu();
 
 document.addEventListener('DOMContentLoaded', () => {
     UI.initReveal();
