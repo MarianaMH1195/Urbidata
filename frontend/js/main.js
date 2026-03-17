@@ -11,6 +11,15 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 async function updateAllData(prov = null) {
     try {
+        // Verificar conexión con el backend primero
+        const health = await fetch(`${CONFIG.API_BASE_URL}/health`).catch(() => null);
+        if (!health || !health.ok) {
+            console.error("🔴 No hay conexión con el Backend en:", CONFIG.API_BASE_URL);
+            console.log("⚠️ Asegúrate de que el servidor está corriendo: 'python backend/main.py'");
+        } else {
+            console.log("🟢 Conexión con el Backend exitosa");
+        }
+
         const [ranking, dormitorio, comparativa, flujosRaw] = await Promise.all([
             Api.fetchRanking(prov),
             Api.fetchDormitorio(prov),
