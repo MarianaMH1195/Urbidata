@@ -111,12 +111,11 @@ const UI = {
         const dLng = lng2 - lng1;
         const dist = Math.sqrt(dLat * dLat + dLng * dLng);
 
-        // Curvatura muy suave — solo lo justo para no ir por el mar
+        // Curvatura muy suave 
         const curvature = dist * 0.18;
 
         // Siempre desplazamos el punto de control hacia el norte (interior)
-        // nunca hacia el sur (mar)
-        const ctrlLat = midLat + curvature;
+       const ctrlLat = midLat + curvature;
         const ctrlLng = midLng;
 
         const points = [];
