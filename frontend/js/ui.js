@@ -47,7 +47,7 @@ const UI = {
             // Overlays
             const labels = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19, opacity: 0.8 });
 
-            const baseMaps = { "🗺️ Topográfico": voyager, "🛰️ Satélite": sat, "🌑 Oscuro": dark };
+            const baseMaps = { "Topográfico": voyager, "Satélite": sat, "Oscuro": dark };
             const overlays = { "Etiquetas": labels };
 
             voyager.addTo(map);
