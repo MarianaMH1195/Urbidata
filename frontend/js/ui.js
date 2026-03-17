@@ -141,11 +141,11 @@ const UI = {
             filtered = filtered.filter(f => String(f.origen).startsWith('29') || String(f.destino).startsWith('29'));
         }
 
-        // Mostrar solo flujos que conecten con las capitales (Radial: Capital <-> Pueblos)
-        const ACTIVE_CAPS = ['41091', '29067'].filter(id => data.allMuni[id]);
-        filtered = filtered.filter(f =>
-            ACTIVE_CAPS.includes(String(f.origen)) || ACTIVE_CAPS.includes(String(f.destino))
-        );
+        // Mostrar todos los flujos que tengan coordenadas (ya no filtramos solo capitales)
+        // const ACTIVE_CAPS = ['41091', '29067'].filter(id => data.allMuni[id]);
+        // filtered = filtered.filter(f =>
+        //     ACTIVE_CAPS.includes(String(f.origen)) || ACTIVE_CAPS.includes(String(f.destino))
+        // );
 
         let top = filtered.slice(0, 100); 
         const max = (top[0]?.viajes || top[0]?.total || 1);
