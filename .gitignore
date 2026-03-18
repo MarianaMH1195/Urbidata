@@ -2,11 +2,13 @@ __pycache__/
 *.pyc
 *.pyo
 .env
-*.parquet
-*.csv
-data/
 .DS_Store
 venv/
 style_guide.md
 presentation_prompt.md
 
+# Datos crudos (demasiado pesados)
+backend/data/raw/
+
+# CSV maestro (612MB, demasiado grande)
+backend/data/processed/datos_limpios_provincias.csv
