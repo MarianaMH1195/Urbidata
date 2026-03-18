@@ -6,7 +6,6 @@ Plataforma avanzada de **Data Analytics y Visualización** diseñada para el an�
 ![FastAPI](https://img.shields.io/badge/FastAPI-0.100+-009688.svg)
 ![Pandas](https://img.shields.io/badge/Pandas-2.0+-150458.svg)
 ![Leaflet](https://img.shields.io/badge/Leaflet-1.9+-绿色.svg)
-![Render](https://img.shields.io/badge/Deployment-Render-430098.svg)
 ![License](https://img.shields.io/badge/License-MIT-green.svg)
 
 ---
@@ -21,7 +20,6 @@ Plataforma avanzada de **Data Analytics y Visualización** diseñada para el an�
   - [Limpieza y Procesamiento](#limpieza-y-procesamiento)
   - [Motor de Análisis](#motor-de-análisis)
 - [Dashboard Interactivo](#dashboard-interactivo)
-- [Despliegue](#despliegue)
 - [Instalación y Ejecución](#instalación-y-ejecución)
 - [Resultados e Insights](#resultados-e-insights)
 - [Mejoras Futuras](#mejoras-futuras)
@@ -40,7 +38,6 @@ Plataforma avanzada de **Data Analytics y Visualización** diseñada para el an�
 - **Cartografía Interactiva**: Leaflet.js con capas personalizadas (CartoDB, Esri).
 - **Visualización de Datos**: Chart.js para gráficas dinámicas.
 - **Servidor Web**: Uvicorn.
-- **Despliegue**: Render.com (PaaS).
 
 ---
 
@@ -60,7 +57,6 @@ Urbidata/
 │   ├── js/             # Lógica de cliente (mapas, gráficas, API)
 │   └── index.html      # Dashboard principal
 ├── requirements.txt    # Dependencias del proyecto
-├── render.yaml         # Configuración de despliegue en la nube
 ├── .gitignore          # Archivos excluidos de Git
 └── README.md           # Documentación del proyecto
 ```
@@ -99,17 +95,10 @@ Localizado en `analysis.py`, el cerebro del proyecto calcula:
 
 ## 🚀 Dashboard Interactivo
 La aplicación web permite una visualización 360º:
-- **Mapa de Calidad**: Visualización de flujos mediante líneas Bezier con intensidad codificada por colores.
+- **Mapa Interactivo**: Visualización de flujos mediante líneas Bézier con intensidad codificada por colores.
 - **KPIs en tiempo real**: Contadores animados de viajes totales y municipios analizados.
 - **Gráficas Comparativas**: Barras dinámicas para entender el comportamiento laborable/festivo.
 - **Panel de Ranking**: Tabla interactiva con los municipios más activos.
-
----
-
-## Despliegue
-El proyecto está optimizado para funcionar en entornos **Cloud**:
-- **Render.com**: Configurado mediante `render.yaml` para despliegues automáticos desde GitHub.
-- **Configuración Dinámica**: El frontend adapta su `API_BASE_URL` automáticamente según el entorno detectado (local vs. producción).
 
 ---
 
@@ -128,11 +117,19 @@ El proyecto está optimizado para funcionar en entornos **Cloud**:
    ```bash
    pip install -r requirements.txt
    ```
-3. Ejecutar el servidor backend:
+3. Ejecutar el pipeline de datos (solo la primera vez):
    ```bash
-   python backend/main.py
+   cd backend
+   python download.py
+   python cleaning.py
+   python analysis.py
    ```
-4. Abrir `frontend/index.html` en tu navegador (o usar Live Server).
+4. Arrancar el servidor backend:
+   ```bash
+   cd backend
+   uvicorn main:app --host 0.0.0.0 --port 8000
+   ```
+5. Abrir `frontend/index.html` en tu navegador (o usar Live Server en VS Code).
 
 ---
 
