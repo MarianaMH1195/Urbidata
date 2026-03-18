@@ -1,4 +1,4 @@
-// ==================== MAIN MODULE ====================
+
 let globalData;
 window.mapMode = 'all';
 window.rankMode = 'salidas';
@@ -11,6 +11,15 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 async function updateAllData(prov = null) {
     try {
+        // Verificar conexión con el backend primero
+        const health = await fetch(`${CONFIG.API_BASE_URL}/health`).catch(() => null);
+        if (!health || !health.ok) {
+            console.error("🔴 No hay conexión con el Backend en:", CONFIG.API_BASE_URL);
+            console.log("⚠️ Asegúrate de que el servidor está corriendo: 'python backend/main.py'");
+        } else {
+            console.log("🟢 Conexión con el Backend exitosa");
+        }
+
         const [ranking, dormitorio, comparativa, flujosRaw] = await Promise.all([
             Api.fetchRanking(prov),
             Api.fetchDormitorio(prov),
@@ -27,6 +36,16 @@ async function updateAllData(prov = null) {
         } else {
             allMuni = { ...Api.getMunicipiosSevilla(), ...Api.getMunicipiosMalaga() };
         }
+        // Enriquecer allMuni con cualquier ID que aparezca en flujos
+        // (incluyendo variantes _AM de MITMA que no están en el mapa base)
+        (flujosRaw || []).forEach(f => {
+            [f.origen, f.destino].forEach(id => {
+                if (!allMuni[id]) {
+                    const name = Api.getName(id);
+                    if (name && name !== id) allMuni[id] = name;
+                }
+            });
+        });
         const keys = Object.keys(allMuni);
 
         let flujos = flujosRaw || [];

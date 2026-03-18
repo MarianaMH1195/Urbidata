@@ -756,28 +756,186 @@ h1 .line2 {
     transform: none;
 }
 
+/* Mobile Navigation & Responsive Overrides */
+.menu-toggle {
+    display: none;
+    background: none;
+    border: none;
+    color: var(--accent);
+    cursor: pointer;
+    padding: 8px;
+    z-index: 101;
+}
+
 @media (max-width: 1024px) {
+    .wrapper {
+        padding: 0 16px;
+    }
+
     .kpi-grid {
         grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
     }
 
     .grid-2,
     .grid-3 {
         grid-template-columns: 1fr;
     }
-}
 
-@media (max-width: 640px) {
-    .kpi-grid {
-        grid-template-columns: 1fr 1fr;
+    .hero {
+        padding: 60px 0 40px;
     }
 
     h1 {
-        font-size: 32px;
+        font-size: 42px;
+    }
+}
+
+header {
+    position: sticky;
+    top: 0;
+    z-index: 200; /* Super high to stay on top of everything */
+    background: rgba(247, 243, 238, 0.95);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border);
+    padding: 0 24px;
+}
+
+@media (max-width: 900px) {
+    .menu-toggle {
+        display: block;
     }
 
     nav {
-        display: none;
+        display: none !important; /* Hide desktop nav at this breakpoint */
+    }
+
+    nav.mobile-active {
+        display: flex !important;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: var(--bg);
+        z-index: 150; /* Between header(200) and content(1) */
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        padding: 40px;
+        gap: 20px;
+        /* Animation will be handled by visibility or opacity if needed, 
+           but let's keep it simple for stability first */
+    }
+}
+
+@media (max-width: 768px) {
+    .header-inner {
+        padding: 12px 0;
+    }
+
+    nav {
+        position: fixed;
+        top: 60px; /* Reduced header height in mobile */
+        left: 0;
+        right: 0;
+        background: rgba(247, 243, 238, 0.99);
+        backdrop-filter: blur(20px);
+        flex-direction: column;
+        padding: 20px;
+        gap: 12px;
+        border-bottom: 2px solid var(--accent);
+        transform: translateY(-120%);
+        transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        z-index: 150;
+        display: flex !important;
+        box-shadow: 0 10px 30px rgba(60, 35, 10, 0.15);
+    }
+
+    nav.active {
+        transform: translateY(0);
+    }
+
+    .nav-btn {
+        width: 100%;
+        padding: 14px;
+        text-align: center;
+        background: rgba(60, 35, 10, 0.03);
+    }
+
+    .header-badge {
+        display: none; /* Hide on small screens to save space */
+    }
+
+    .hero-desc {
+        max-width: 100%;
+        font-size: 15px;
+    }
+
+    .filter-bar {
+        padding: 12px;
+        gap: 8px;
+    }
+
+    .filter-select {
+        flex: 1 1 120px;
+    }
+
+    .btn-primary, .btn-ghost {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .section-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+    }
+
+    .toggle-group {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .toggle-btn {
+        flex: 1;
+        text-align: center;
+    }
+}
+
+@media (max-width: 480px) {
+    h1 {
+        font-size: 34px;
+    }
+
+    .kpi-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .logo-text {
+        font-size: 18px;
+    }
+
+    .logo-icon {
+        width: 32px;
+        height: 32px;
+        font-size: 14px;
+    }
+
+    .kpi-card {
+        padding: 20px;
+    }
+
+    .kpi-value {
+        font-size: 28px;
+    }
+
+    #map {
+        height: 350px;
+    }
+
+    .chart-wrap {
+        height: 240px;
     }
 }
 

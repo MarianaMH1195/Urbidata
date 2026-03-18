@@ -47,7 +47,7 @@ const UI = {
             // Overlays
             const labels = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19, opacity: 0.8 });
 
-            const baseMaps = { "🗺️ Topográfico": voyager, "🛰️ Satélite": sat, "🌑 Oscuro": dark };
+            const baseMaps = { "Topográfico": voyager, "Satélite": sat, "Oscuro": dark };
             const overlays = { "Etiquetas": labels };
 
             voyager.addTo(map);
@@ -90,9 +90,10 @@ const UI = {
 
         const muniMap = data.allMuni || {};
         Object.keys(muniMap).forEach(k => {
-            const c = coords[k]; if (!c) return;
-            const isCap = String(k) === "41091" || String(k) === "29067";
-            const color = String(k).startsWith("41") ? '#FF6DAA' : '#00E5C8';
+            const normK = Api.normalizeId(k);
+            const c = coords[normK] || coords[k]; if (!c) return;
+            const isCap = normK === "41091" || normK === "29067";
+            const color = normK.startsWith("41") ? '#FF6DAA' : '#00E5C8';
             const radius = isCap ? 8 : 4;
             const marker = L.circleMarker(c, { radius, color, fillColor: color, fillOpacity: 0.7, weight: isCap ? 2 : 1 });
             marker.bindTooltip(`<strong>${muniMap[k]}</strong>`, { className: 'tooltip-custom' });
@@ -110,12 +111,11 @@ const UI = {
         const dLng = lng2 - lng1;
         const dist = Math.sqrt(dLat * dLat + dLng * dLng);
 
-        // Curvatura muy suave — solo lo justo para no ir por el mar
+        // Curvatura muy suave 
         const curvature = dist * 0.18;
 
         // Siempre desplazamos el punto de control hacia el norte (interior)
-        // nunca hacia el sur (mar)
-        const ctrlLat = midLat + curvature;
+       const ctrlLat = midLat + curvature;
         const ctrlLng = midLng;
 
         const points = [];
@@ -141,41 +141,50 @@ const UI = {
             filtered = filtered.filter(f => String(f.origen).startsWith('29') || String(f.destino).startsWith('29'));
         }
 
-        // Mostrar solo flujos que conecten con las capitales (Radial: Capital <-> Pueblos)
-        const ACTIVE_CAPS = ['41091', '29067'].filter(id => data.allMuni[id]);
-        filtered = filtered.filter(f =>
-            ACTIVE_CAPS.includes(String(f.origen)) || ACTIVE_CAPS.includes(String(f.destino))
-        );
+        // Mostrar todos los flujos que tengan coordenadas (ya no filtramos solo capitales)
+        // const ACTIVE_CAPS = ['41091', '29067'].filter(id => data.allMuni[id]);
+        // filtered = filtered.filter(f =>
+        //     ACTIVE_CAPS.includes(String(f.origen)) || ACTIVE_CAPS.includes(String(f.destino))
+        // );
 
         let top = filtered.slice(0, 100); 
-        const max = (top[0]?.viajes || top[0]?.total || 1);
+        // Usamos el max GLOBAL (antes del filtro) para que la escala sea consistente
+        const allFlows = data.flujos || [];
+        const max = allFlows[0]?.viajes || allFlows[0]?.total || top[0]?.viajes || 1;
         const muniMap = data.allMuni || {};
 
         top.forEach(f => {
-            const c1 = coords[f.origen], c2 = coords[f.destino]; if (!c1 || !c2) return;
+            const nOrig = Api.normalizeId(f.origen), nDest = Api.normalizeId(f.destino);
+            const c1 = coords[nOrig] || coords[f.origen];
+            const c2 = coords[nDest] || coords[f.destino];
+            if (!c1 || !c2) return;
             const val = f.viajes || f.total || 0;
             const norm = val / max; 
 
-            // Umbrales de intensidad refinados (Problema 3)
-            const isHigh = norm > 0.35;   // flujos dominantes (dormitorio → capital)
-            const isMedium = norm > 0.10 && norm <= 0.35; // flujos medios
+            // Umbrales calibrados con datos reales
+            // Alto (>20% del máximo): flujos principales — aparecen en ROJO
+            // Medio (5-20%): flujos secundarios — aparecen en NARANJA
+            // Bajo (<5%): flujos menores — aparecen en VERDE punteado
+            const isHigh   = norm > 0.20;
+            const isMedium = norm > 0.05 && norm <= 0.20;
             
             const color = isHigh ? '#C8502A' : isMedium ? '#C9973A' : '#7A9E7E';
 
-            // Grosores tácticos: el Alto tiene mucho peso para centrar la vista
-            const weight = isHigh ? 5 : isMedium ? 3 : 1.5;
-            
-            // Opacidades: Altos muy sólidos, Medios claros, Bajos sutiles
-            const opacity = isHigh ? 0.92 : isMedium ? 0.70 : 0.35;
+            // Grosor: alto=grueso, medio=moderado, bajo=fino pero visible
+            const weight  = isHigh ? 5 : isMedium ? 3 : 2;
+            // Opacidad: todos claramente visibles
+            const opacity = isHigh ? 0.92 : isMedium ? 0.75 : 0.65;
+            // Trazo: alto y medio = sólido, bajo = punteado para diferenciarlo
+            const dashArray = isHigh || isMedium ? null : '5, 7';
 
             const curvePoints = UI._bezierPoints(c1, c2);
 
-            // Capa 1 — halo suave (detrás) para dar efecto de brillo a los flujos más altos
+            // Halo para alto y medio (efecto de brillo)
             if (isHigh || isMedium) {
                 const halo = L.polyline(curvePoints, {
                     weight: weight + 4,
                     color: color,
-                    opacity: opacity * 0.3,
+                    opacity: opacity * 0.25,
                     smoothFactor: 1,
                     lineCap: 'round',
                     interactive: false
@@ -184,17 +193,19 @@ const UI = {
                 halo.addTo(map);
             }
 
-            // Capa 2 — línea principal (encima)
-            const line = L.polyline(curvePoints, {
-                weight: weight,
-                color: color,
-                opacity: opacity,
+            // Línea principal
+            const lineOpts = {
+                weight,
+                color,
+                opacity,
                 smoothFactor: 2,
                 lineCap: 'round'
-                // Ya no usamos dashArray para que todas las líneas sean claramente visibles
-            });
+            };
+            if (dashArray) lineOpts.dashArray = dashArray;
+            const line = L.polyline(curvePoints, lineOpts);
 
-            const n1 = muniMap[f.origen] || f.origen, n2 = muniMap[f.destino] || f.destino;
+            const n1 = muniMap[f.origen] || Api.getName(f.origen) || f.origen;
+            const n2 = muniMap[f.destino] || Api.getName(f.destino) || f.destino;
             const t_lab = (f.laborable || 0).toLocaleString('es-ES');
             const t_fes = (f.festivo || 0).toLocaleString('es-ES');
 
@@ -376,11 +387,25 @@ const UI = {
             setTimeout(() => UI.initReveal(), 50);
         }
 
-        document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
         const btn = document.querySelector(`.nav-btn[onclick*="'${name}'"]`);
         if (btn) btn.classList.add('active');
+    },
+
+    toggleMenu: () => {
+        const nav = document.getElementById('main-nav');
+        if (nav) nav.classList.toggle('active');
+    },
+
+    closeMenu: () => {
+        const nav = document.getElementById('main-nav');
+        if (nav) nav.classList.remove('active');
     }
 };
+
+// Global shortcuts for onclick handlers
+const showSection = (name) => UI.showSection(name);
+const toggleMenu = () => UI.toggleMenu();
+const closeMenu = () => UI.closeMenu();
 
 document.addEventListener('DOMContentLoaded', () => {
     UI.initReveal();
